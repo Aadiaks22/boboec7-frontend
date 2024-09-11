@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea"
 
 export default function StudentRegistrationForm() {
   return (
-    <div className="mt-8 sm:mt-12 md:mt-16 mb-8 sm:mb-12 md:mb-16"> {/* Added top margin here */}
+    <>
+    <div>
       <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>Student Registration</CardTitle>
@@ -130,5 +131,6 @@ export default function StudentRegistrationForm() {
         </CardContent>
       </Card>
     </div>
+    </>
   )
 }
