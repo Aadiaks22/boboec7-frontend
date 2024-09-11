@@ -4,6 +4,7 @@ import HomePage from "@/pages/HomePage";
 import RegisterPage from "@/pages/RegisterPage";
 import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import AuthLayout from "./layouts/AuthLayout";
 
 const router =  createBrowserRouter([
     {
@@ -23,11 +24,16 @@ const router =  createBrowserRouter([
                 element: <RegisterPage />
             }
         ]
-
     },
     {
-        path: '/login',
-        element: <LoginPage />
+        path: '/auth',
+        element: <AuthLayout/>,
+        children: [
+            {
+                path: 'login',
+                element: <LoginPage />
+            }
+        ]
     }
 
 
