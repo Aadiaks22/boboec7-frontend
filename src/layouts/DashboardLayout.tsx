@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Breadcrumbs from "@/components/Breadcrums";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,15 @@ import {
 import { Link, Outlet } from "react-router-dom";
 
 const HomePage = () => {
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    navigate("/auth/login");
+  }
+  
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[230px_1fr]">
       {/* Sidebar */}
@@ -49,6 +59,13 @@ const HomePage = () => {
               >
                 <ShoppingCart className="h-4 w-4" />
                 Student Registration
+              </Link>
+              <Link
+                to="/dashboard/fee-collection"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Fee Collection
               </Link>
             </nav>
           </div>
@@ -83,6 +100,10 @@ const HomePage = () => {
                   <ShoppingCart className="h-5 w-5" />
                   Student Registration
                 </Link>
+                <Link to="/dashboard/fee-collection" className="flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground">
+                  <ShoppingCart className="h-5 w-5" />
+                  Fee Collection
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -101,7 +122,7 @@ const HomePage = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem><Button variant="ghost" onClick={handleLogout}>Logout</Button></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
