@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { Button} from "@/components/ui/button";
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 
 interface Student {
   _id: string;
@@ -25,18 +25,19 @@ interface Student {
 }
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-
+const ITEMS_PER_PAGE = 10;
 const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 const statuses = ["active", "dropped out", "on hold", "graduate"];
 
-const ITEMS_PER_PAGE = 10;
 
-const RegisterStudent: React.FC = () => {
+ 
+export default function StudentManagement({ openPopover }: { openPopover: () => void }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  //const { note, updateNote } = props;
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -67,18 +68,17 @@ const RegisterStudent: React.FC = () => {
       );
       setFilteredStudents(filtered);
     }
-    setCurrentPage(1); // Reset to the first page when search query changes
+    setCurrentPage(1);
   }, [searchQuery, students]);
 
-  const handleEdit = (id: string) => {
-    console.log(`Edit student with ID: ${id}`);
-    // Implement edit functionality
-  };
+  // const handleEdit = (student: Student) => {
+  //    console.log(student);
+  // };
 
-  const handleDelete = (id: string) => {
-    console.log(`Delete student with ID: ${id}`);
-    // Implement delete functionality
-  };
+  // const handleDelete = (id: string) => {
+  //   console.log(`Delete student with ID: ${id}`);
+  //   // Implement delete functionality
+  // };
 
   // Calculate paginated students
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -88,8 +88,8 @@ const RegisterStudent: React.FC = () => {
 
   return (
     <div className="main-content p-4">
-      <h1 className="text-xl font-semibold mb-4">All Registered Students</h1>
-      {error && <p className="text-red-500">{error}</p>}
+      <h1 className="text-2xl font-semibold mb-4">All Registered Students</h1>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
       <div className="mb-4 flex items-center">
         <Input
           type="text"
@@ -114,7 +114,7 @@ const RegisterStudent: React.FC = () => {
                   <TableHead className="sticky top-0 bg-background">Course</TableHead>
                   <TableHead className="sticky top-0 bg-background">Level</TableHead>
                   <TableHead className="sticky top-0 bg-background">Status</TableHead>
-                  <TableHead className="sticky top-0 bg-background">Actions</TableHead> {/* New Column */}
+                  <TableHead className="sticky top-0 bg-background">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -130,6 +130,7 @@ const RegisterStudent: React.FC = () => {
                       <select
                         value={student.level}
                         onChange={(e) => console.log(`Changed level for ${student._id}: ${e.target.value}`)}
+                        className="w-full p-2 border rounded"
                       >
                         {levels.map(level => (
                           <option key={level} value={level}>{level}</option>
@@ -140,6 +141,7 @@ const RegisterStudent: React.FC = () => {
                       <select
                         value={student.status}
                         onChange={(e) => console.log(`Changed status for ${student._id}: ${e.target.value}`)}
+                        className="w-full p-2 border rounded"
                       >
                         {statuses.map(status => (
                           <option key={status} value={status}>{status}</option>
@@ -149,12 +151,11 @@ const RegisterStudent: React.FC = () => {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline">Actions</Button>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleEdit(student._id)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(student._id)}>Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={openPopover}>Edit</DropdownMenuItem>
+                          {/* Add more items here as needed */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -189,6 +190,7 @@ const RegisterStudent: React.FC = () => {
       )}
     </div>
   );
-};
+}
 
-export default RegisterStudent;
+
+

@@ -6,7 +6,7 @@ import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import FeeCollection from "@/pages/FeeCollection";
-import RegisterStudent from "@/pages/RegisterStudent";
+import RegisterStudent from "@/pages/RegisteredStudent";
 
 const router =  createBrowserRouter([
     {

@@ -152,7 +152,6 @@ export default function StudentRegistrationForm() {
               <Label htmlFor="address">Address</Label>
               <Textarea id="address" name="address" placeholder="Full Address" required value={credentials.address} onChange={onChange} />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="course">Course</Label>
@@ -161,60 +160,12 @@ export default function StudentRegistrationForm() {
                     <SelectValue placeholder="Select Course" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="math">BOB</SelectItem>
-                    <SelectItem value="science">Mental Math</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="level">Level</Label>
-                <Select onValueChange={(value) => setCredentials({ ...credentials, level: value })}>
-                  <SelectTrigger id="level">
-                    <SelectValue placeholder="Select Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Level 1</SelectItem>
-                    <SelectItem value="2">Level 2</SelectItem>
-                    <SelectItem value="3">Level 3</SelectItem>
-                    <SelectItem value="4">Level 4</SelectItem>
-                    <SelectItem value="5">Level 5</SelectItem>
-                    <SelectItem value="6">Level 6</SelectItem>
-                    <SelectItem value="7">Level 7</SelectItem>
-                    <SelectItem value="8">Level 8</SelectItem>
-                    <SelectItem value="9">Level 9</SelectItem>
-                    <SelectItem value="10">Level 10</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select onValueChange={(value) => setCredentials({ ...credentials, status: value })}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="dropped">Dropped</SelectItem>
-                    <SelectItem value="graduate">Graduate</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select onValueChange={(value) => setCredentials({ ...credentials, role: value })}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select Role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="BRAINOBRAIN">BRAINOBRAIN</SelectItem>
+                    <SelectItem value="MENTAL MATH">MENTAL MATH</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
             <Button type="submit" className="w-full">Register Student</Button>
           </form>
         </CardContent>
