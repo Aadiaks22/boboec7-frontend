@@ -6,7 +6,6 @@ import numberToWords from 'number-to-words';
 import { Button } from "@/components/ui/button";
 import { PrinterIcon, SaveIcon } from "lucide-react";
 import './FeeCollection.css';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import './Demo3';
 import Demo3 from "./Demo3";
 
@@ -73,11 +72,11 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const FeeCollection = () => {
 
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  //const [selectedCourse, setSelectedCourse] = useState<string>('');
 
-  const handleCourseSelect = (course: string) => {
-    setSelectedCourse(course);
-  };
+  // const handleCourseSelect = (course: string) => {
+  //   setSelectedCourse(course);
+  // };
 
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -108,10 +107,13 @@ const FeeCollection = () => {
     fetchReceiptNumber();
   }, []);
 
-  const { id } = useParams<{ id: string }>(); // Extract the student ID from the route
+  const { id: r_id } = useParams<{ id: string }>(); // Extract the student ID from the route
   const [student, setStudent] = useState<Student | null>(null); // State to store student details
   //const [error, setError] = useState<string | null>(null); // State to store error message
   const [currentDate, setCurrentDate] = useState<string>("");
+
+  // State to store dynamically added student ID
+  const [s_id, setSId] = useState<string | null>(null);
 
   // Course Fee, Exercise Book Amount, and Tax States
   const [courseFee, setCourseFee] = useState<number>(0);
@@ -128,6 +130,31 @@ const FeeCollection = () => {
   const [stateTax06, setStateTax06] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [totalAmountInWords, setTotalAmountInWords] = useState<string>("");
+  const [mcourseFee, setMCourseFee] = useState<number>(0);
+  const [mkitFee, setMKitFee] = useState<number>(0);
+
+  const handleAddStudent = (studentId: string) => {
+    console.log("Student ID for fee collection:", studentId);
+    // You can now use this studentId in your fee collection logic
+    setSId(studentId); // Store the student ID
+    setCourseFee(0);
+    setExerciseBookFee(0);
+    setkitFee(0);
+    setjacketFee(0);
+    setCentralTax9(0);
+    setStateTax9(0);
+    setCentralTax6(0);
+    setStateTax6(0);
+    setCentralTax25(0);
+    setStateTax25(0);
+    setCentralTax06(0);
+    setStateTax06(0);
+    setMCourseFee(0);
+    setMKitFee(0);
+  };
+
+  // Prioritize s_id if available, otherwise fall back to r_id
+  const id = r_id || s_id;
 
   useEffect(() => {
     // Set the current date in "DD/MM/YYYY" format
@@ -136,7 +163,6 @@ const FeeCollection = () => {
     setCurrentDate(formattedDate);
 
     const fetchStudent = async () => {
-
       try {
         const response = await fetch(`${BASE_URL}/api/admin/user/${id}`);
         if (!response.ok) {
@@ -178,10 +204,10 @@ const FeeCollection = () => {
 
 
     // Calculate total amount (Course Fee + Exercise Book Fee + All Taxes)
-    const total = courseFee + exerciseBookFee + kitFee + jacketFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax25 + calculatedStateTax25 + calculatedCentralTax06 + calculatedStateTax06;
+    const total = courseFee + exerciseBookFee + kitFee + jacketFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax25 + calculatedStateTax25 + calculatedCentralTax06 + calculatedStateTax06 + mcourseFee + mkitFee;
     setTotalAmount(total);
     setTotalAmountInWords(numberToWords.toWords(total).toUpperCase()); // Convert number to words
-  }, [courseFee, exerciseBookFee, kitFee, jacketFee]);
+  }, [courseFee, exerciseBookFee, kitFee, jacketFee , mcourseFee, mkitFee]);
 
   const handleLevelChange = (newLevel: string) => {
     if (student) {
@@ -200,7 +226,7 @@ const FeeCollection = () => {
 
       <div className="grid grid-cols-2 gap-1 mb-2 text-xs print:text-[7pt]">
         <div className="flex">
-          <Label className="font-bold" htmlFor={`studentCode${copy}`}>Student Code:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`studentCode${copy}`}>Student Code:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
             id={`studentCode${copy}`}
@@ -210,7 +236,7 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex justify-end">
-          <Label className="font-bold" htmlFor={`receiptNumber${copy}`}>Receipt No.:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`receiptNumber${copy}`}>Receipt No.:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
             id={`receiptNumber${copy}`}
@@ -220,7 +246,7 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex">
-          <Label className="font-bold" htmlFor={`studentName${copy}`}>Student Name:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`studentName${copy}`}>Student Name:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
             id={`studentName${copy}`}
@@ -230,7 +256,7 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex justify-end">
-          <Label className="font-bold" htmlFor={`courseName${copy}`}>Course:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`courseName${copy}`}>Course:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
             id={`courseName${copy}`}
@@ -246,7 +272,7 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex justify-end">
-          <Label className="font-bold" htmlFor={`date${copy}`}>Date:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`date${copy}`}>Date:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
             id={`date${copy}`}
@@ -256,7 +282,7 @@ const FeeCollection = () => {
           />
         </div>
       </div>
-      {(student?.course === 'BRAINOBRAIN' || selectedCourse === 'BRAINOBRAIN') && (
+      {(student?.course === 'BRAINOBRAIN') && (
         <table className="w-full border-collapse border border-black mb-2 text-xs print:text-[7pt]">
           <thead>
             <tr>
@@ -341,7 +367,7 @@ const FeeCollection = () => {
               </td>
             </tr>
             {/* Checking if 'student' exists */}
-            {student && (
+            {r_id && (
               <>
                 <tr>
                   <td className="border border-black p-1 print:p-[2px]">Kit Fee</td>
@@ -421,7 +447,7 @@ const FeeCollection = () => {
           </tbody>
         </table>)}
 
-      {(student?.course === 'MENTAL MATH' || selectedCourse === 'MENTAL MATH') && (
+      {(student?.course === 'MENTAL MATH') && (
         <table className="w-full border-collapse border border-black mb-2 text-xs print:text-[7pt]">
           <thead>
             <tr>
@@ -436,8 +462,8 @@ const FeeCollection = () => {
                 <Input
                   name={`courseFee${copy}`}
                   className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={courseFee}
-                  onChange={(e) => setCourseFee(Number(e.target.value))}
+                  value={mcourseFee}
+                  onChange={(e) => setMCourseFee(Number(e.target.value))}
                   readOnly={copy === 2}
                 />
               </td>
@@ -446,10 +472,10 @@ const FeeCollection = () => {
               <td className="text-center border border-black p-1 print:p-[2px]">Kit Fee</td>
               <td className="border border-black p-1 print:p-[2px]">
                 <Input
-                  name={`exerciseBookFee${copy}`}
+                  name={`kitFee${copy}`}
                   className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={exerciseBookFee}
-                  onChange={(e) => setExerciseBookFee(Number(e.target.value))}
+                  value={mkitFee}
+                  onChange={(e) => setMKitFee(Number(e.target.value))}
                   readOnly={copy === 2}
                 />
               </td>
@@ -458,16 +484,16 @@ const FeeCollection = () => {
         </table>)}
 
 
-      <div className="grid grid-cols-2 gap-1 mb-2 text-xs print:text-[7pt]">
+      <div className="grid grid-cols-2 gap-2 mb-2 text-xs print:text-[7pt]">
         <div className="flex">
-          <Label className="font-bold" htmlFor={`paymentMode${copy}`}>Mode:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`paymentMode${copy}`}>Mode:</Label>
           <select className="w-auto ml-1 border-none bg-transparent" id={`paymentMode${copy}`} name={`paymentMode${copy}`}>
             <option value="cash">Cash</option>
             <option value="online">Online</option>
           </select>
         </div>
-        <div className="flex justify-end">
-          <Label className="font-bold" htmlFor={`totalAmount${copy}`}>Total:</Label>
+        <div className="flex text-center">
+          <Label className="mt-1 font-bold" htmlFor={`totalAmount${copy}`}>Total:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
             id={`totalAmount${copy}`}
@@ -476,7 +502,8 @@ const FeeCollection = () => {
             readOnly
           />
         </div>
-        <div className="col-span-2">
+        <div></div>
+        <div className="flex justify-end">
           <Label className="font-bold" htmlFor={`amountInWords${copy}`}>Amount in Words:</Label>
           <textarea
             className="w-full ml-1 border-none bg-transparent p-0 h-auto text-xs print:text-[7pt]"
@@ -489,38 +516,24 @@ const FeeCollection = () => {
           />
         </div>
       </div>
-      <div className="mt-2 text-xs print:text-[7pt]">
-        <span className="font-bold">Authority Seal And Signature</span>
-      </div>
+      <div className="flex">
+          <div className="mt-2 text-xs print:text-[7pt]">
+            <span className="font-bold">Authority Seal And Signature</span>
+          </div>
+        </div>
     </div>
   );
 
   return (
     <>
+    {!r_id &&(
+      <div className="print:hidden">
+        <Demo3 onAddStudent={handleAddStudent} />
+      </div>)}
       <div className="flex justify-between items-center">
-        {!student && (
-          <div className="flex">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="p-2 bg-gray-200 rounded-md cursor-pointer">
-                Select Course For Fees
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white border rounded-md shadow-md">
-                <DropdownMenuItem
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleCourseSelect('BRAINOBRAIN')}
-                >
-                  BRAINOBRAIN
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleCourseSelect('MENTAL MATH')}
-                >
-                  MENTAL MATH
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>)}
-        <div className="flex space-x-4 max-w-2xl mt-4 print:hidden">
+        <div className="flex">
+        </div>
+        <div className="flex space-x-4 max-w-2xl mt-4 print:hidden" style={{ marginTop: "0px" }}>
           <Button onClick={handleSave} className="flex items-center">
             <SaveIcon className="mr-2 h-4 w-4" />
             Save
@@ -531,8 +544,8 @@ const FeeCollection = () => {
           </Button>
         </div>
       </div>
-      {(selectedCourse === 'MENTAL MATH' || selectedCourse === 'BRAINOBRAIN') && (
-      <Demo3/> )}
+
+
       <div id="receipt" ref={receiptRef} className="w-full max-w-[297mm] mx-auto p-4 print:p-0 print:max-w-full">
         <div className="print:flex print:flex-row print:justify-between">
           {renderReceipt(1)}

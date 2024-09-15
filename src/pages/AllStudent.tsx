@@ -30,7 +30,7 @@ const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 const statuses = ["active", "dropped out", "on hold", "graduate"];
 
 
- 
+
 export default function StudentManagement({ openPopover }: { openPopover: () => void }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
@@ -86,6 +86,56 @@ export default function StudentManagement({ openPopover }: { openPopover: () => 
   const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
 
+  const handleLevelChange = async (studentId: string, newLevel: string) => {
+    if (!studentId) {
+      console.error('Student ID is required');
+      return;
+    }
+
+    // Get the auth token from local storage
+    const authToken = localStorage.getItem('token'); // Ensure the key matches how you're storing the token
+    //console.log(authToken);
+    if (!authToken) {
+      console.error('No auth token found');
+      return;
+    }
+
+    try {
+      // Step 1: Update the student state locally
+      setStudents(prevStudents =>
+        prevStudents.map(student =>
+          student._id === studentId ? { ...student, level: newLevel } : student
+        )
+      );
+      /// Step 2: Call the API to update the student's level in the database
+      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': authToken, // Ensure you have the auth token here
+        },
+        body: JSON.stringify({ level: newLevel }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update student level');
+      }
+
+      const result = await response.json();
+      console.log('Student level updated successfully:', result);
+      // Optionally, you can update the state or show a success message
+    } catch (error) {
+      console.error('Error updating student level:', error);
+      // Optionally, handle the error (e.g., show an error message)
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>, studentId: string) => {
+    const newLevel = e.target.value; // Extract the new level from the event
+    handleLevelChange(studentId, newLevel); // Pass the student ID and new level to the update function
+  };
+
+
   return (
     <div className="main-content p-4">
       <h1 className="text-2xl font-semibold mb-4">All Registered Students</h1>
@@ -128,8 +178,8 @@ export default function StudentManagement({ openPopover }: { openPopover: () => 
                     <TableCell>{student.course}</TableCell>
                     <TableCell>
                       <select
-                        value={student.level}
-                        onChange={(e) => console.log(`Changed level for ${student._id}: ${e.target.value}`)}
+                        value={student?.level || ''}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleChange(e, student._id)}
                         className="w-full p-2 border rounded"
                       >
                         {levels.map(level => (
@@ -151,7 +201,7 @@ export default function StudentManagement({ openPopover }: { openPopover: () => 
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuItem onClick={openPopover}>Edit</DropdownMenuItem>

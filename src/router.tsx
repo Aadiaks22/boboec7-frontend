@@ -7,6 +7,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import FeeCollection from "@/pages/FeeCollection";
 import RegisterStudent from "@/pages/RegisteredStudent";
+import FeeInvoice from "@/pages/FeeInvoice";
 
 const router =  createBrowserRouter([
     {
@@ -36,6 +37,10 @@ const router =  createBrowserRouter([
             {
                 path: 'register-student',
                 element: <RegisterStudent/>
+            },
+            {
+                path: 'feeinvoice',
+                element: <FeeInvoice/>
             }
 
         ]

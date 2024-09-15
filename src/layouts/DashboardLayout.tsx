@@ -76,6 +76,13 @@ const HomePage = () => {
                 <ShoppingCart className="h-4 w-4" />
                 Register Students
               </Link>
+              <Link
+                to="/dashboard/feeinvoice"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Fee Invoice
+              </Link>
             </nav>
           </div>
         </div>
@@ -116,6 +123,10 @@ const HomePage = () => {
                 <Link to="/dashboard/register-student" className="flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground">
                   <ShoppingCart className="h-5 w-5" />
                   Register Students
+                </Link>
+                <Link to="/dashboard/feeinvoice" className="flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground">
+                  <ShoppingCart className="h-5 w-5" />
+                  Fee Invoice
                 </Link>
               </nav>
             </SheetContent>
