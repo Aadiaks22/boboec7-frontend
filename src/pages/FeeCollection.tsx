@@ -8,6 +8,7 @@ import { PrinterIcon, SaveIcon } from "lucide-react";
 import './FeeCollection.css';
 import './Demo3';
 import Demo3 from "./Demo3";
+import html2canvas from "html2canvas";
 
 interface Student {
   _id: string;
@@ -72,22 +73,13 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const FeeCollection = () => {
 
-  //const [selectedCourse, setSelectedCourse] = useState<string>('');
-
-  // const handleCourseSelect = (course: string) => {
-  //   setSelectedCourse(course);
-  // };
-
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const handleSave = () => {
-    // Implement save functionality here
-    // For example, you could send the data to your backend API
-    console.log('Saving receipt...');
-    // Add your save logic here
-  };
-
   const handlePrint = () => {
+    if (!isSaved) {
+      alert('Please save the receipt before printing');
+      return;
+    }
     window.print();
   };
 
@@ -98,7 +90,7 @@ const FeeCollection = () => {
       try {
         const response = await fetch(`${BASE_URL}/api/admin/receipt-number`);
         const data = await response.json();
-        setReceiptNumber(data.receiptNumber + 1);
+        setReceiptNumber(data.receiptNumber);
       } catch (error) {
         console.error('Error fetching receipt number:', error);
       }
@@ -207,7 +199,7 @@ const FeeCollection = () => {
     const total = courseFee + exerciseBookFee + kitFee + jacketFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax25 + calculatedStateTax25 + calculatedCentralTax06 + calculatedStateTax06 + mcourseFee + mkitFee;
     setTotalAmount(total);
     setTotalAmountInWords(numberToWords.toWords(total).toUpperCase()); // Convert number to words
-  }, [courseFee, exerciseBookFee, kitFee, jacketFee , mcourseFee, mkitFee]);
+  }, [courseFee, exerciseBookFee, kitFee, jacketFee, mcourseFee, mkitFee]);
 
   const handleLevelChange = (newLevel: string) => {
     if (student) {
@@ -215,8 +207,97 @@ const FeeCollection = () => {
     }
   };
 
+  //Save Data of the fee-reciept
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState<boolean>(false); // New state variable for save status
+
+  const handleSave = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    setErrorMessage(null); // Reset any previous error message
+    setSuccessMessage(null); // Reset any previous success message
+
+    // Check if values exist
+    if (!receiptNumber) {
+      setErrorMessage('Missing receipt number');
+      return;
+    }
+    if(!student){
+      setErrorMessage('Missing Student Details');
+      return;
+    }
+    if (!student || !student.name) {
+      setErrorMessage('Missing student name');
+      return;
+    }
+    if (!totalAmount) {
+      setErrorMessage('Missing total amount');
+      return;
+    }
+
+    // Capture the invoice content as an image using html2canvas
+    const invoiceElement = document.querySelector('.invoice') as HTMLElement;
+    const authToken = localStorage.getItem('token'); // Ensure the key matches how you're storing the token
+
+    if (!authToken) {
+      console.error('No auth token found');
+      return;
+    }
+
+    if (invoiceElement) {
+      try {
+        const canvas = await html2canvas(invoiceElement);
+        const imageBlob = await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob as Blob), 'image/png'));
+
+        // Create FormData to send the image as a file
+        const formData = new FormData();
+        formData.append('reciept_number', receiptNumber.toString());
+        formData.append('name', student?.name || "");
+        formData.append('date', new Date().toISOString());
+        formData.append('paid_upto', student?.level || "");
+        formData.append('net_amount', totalAmount.toString());
+        formData.append('reciept_img', imageBlob, `receipt_${receiptNumber}.png`); // Append image as a file
+
+
+        console.log("FormData being sent:", formData); // Log the request body
+
+        const response = await fetch(`${BASE_URL}/api/admin/addreciept`, {
+          method: 'POST',
+          headers: {
+            'auth-token': authToken, // Ensure you have the auth token here
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message || 'Failed to save receipt');
+        }
+
+        const json = await response.json();
+
+        if (json.success) {
+          setIsSaved(true);
+          setSuccessMessage('Receipt saved successfully');
+
+        } else {
+          setErrorMessage('Error in saving receipt');
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          setErrorMessage(error.message);
+        } else {
+          setErrorMessage('An unknown error occurred');
+        }
+      }
+    } else {
+      setErrorMessage('Invoice element not found');
+    }
+  };
+
+
   const renderReceipt = (copy: number) => (
-    <div className="border border-black p-2 print:border-none print:p-1 print:text-[8pt] print:leading-tight">
+    <div className="invoice border border-black p-2 print:border-none print:p-1 print:text-[8pt] print:leading-tight">
       <div className="text-lg font-bold text-center mb-2 print:text-sm">
         OEC-7 ACADEMY ({copy === 1 ? 'Student' : 'Office'} Copy)
       </div>
@@ -235,7 +316,7 @@ const FeeCollection = () => {
             readOnly
           />
         </div>
-        <div className="flex justify-end">
+        <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`receiptNumber${copy}`}>Receipt No.:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
@@ -255,7 +336,7 @@ const FeeCollection = () => {
             readOnly
           />
         </div>
-        <div className="flex justify-end">
+        <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`courseName${copy}`}>Course:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
@@ -266,12 +347,12 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex">
-          <LevelDropdown
+        {!r_id && (<LevelDropdown
             level={student?.level || "1"}
             onLevelChange={handleLevelChange}
-          />
+          />)}
         </div>
-        <div className="flex justify-end">
+        <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`date${copy}`}>Date:</Label>
           <Input
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
@@ -282,7 +363,7 @@ const FeeCollection = () => {
           />
         </div>
       </div>
-      {(student?.course === 'BRAINOBRAIN') && (
+      {(student?.course === 'BRAINOBRAIN' && !r_id) && (
         <table className="w-full border-collapse border border-black mb-2 text-xs print:text-[7pt]">
           <thead>
             <tr>
@@ -366,6 +447,97 @@ const FeeCollection = () => {
                 />
               </td>
             </tr>
+            {/* Checking if 'student' exists */}
+            {/* {r_id && (
+              <>
+                <tr>
+                  <td className="border border-black p-1 print:p-[2px]">Kit Fee</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]"></td>
+                  <td className="border border-black p-1 print:p-[2px]">
+                    <Input
+                      name={`kitFee${copy}`}
+                      className="w-full text-center border-none bg-transparent p-0 h-auto"
+                      value={kitFee}
+                      onChange={(e) => setkitFee(Number(e.target.value))}
+                      readOnly={copy === 2}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
+                  <td className="border border-black p-1 print:p-[2px]">
+                    <Input
+                      name={`centralTax25${copy}`}
+                      className="w-full text-center border-none bg-transparent p-0 h-auto"
+                      value={centralTax25.toFixed(2)}
+                      readOnly
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
+                  <td className="border border-black p-1 print:p-[2px]">
+                    <Input
+                      name={`stateTax25${copy}`}
+                      className="w-full text-center border-none bg-transparent p-0 h-auto"
+                      value={stateTax25.toFixed(2)}
+                      readOnly
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-1 print:p-[2px]">Jacket Fee</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]"></td>
+                  <td className="border border-black p-1 print:p-[2px]">
+                    <Input
+                      name={`jacketFee${copy}`}
+                      className="w-full text-center border-none bg-transparent p-0 h-auto"
+                      value={jacketFee}
+                      onChange={(e) => setjacketFee(Number(e.target.value))}
+                      readOnly={copy === 2}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
+                  <td className="border border-black p-1 print:p-[2px]">
+                    <Input
+                      name={`centralTax06${copy}`}
+                      className="w-full text-center border-none bg-transparent p-0 h-auto"
+                      value={centralTax06.toFixed(2)}
+                      readOnly
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
+                  <td className="border border-black p-1 print:p-[2px]">
+                    <Input
+                      name={`stateTax06${copy}`}
+                      className="w-full text-center border-none bg-transparent p-0 h-auto"
+                      value={stateTax06.toFixed(2)}
+                      readOnly
+                    />
+                  </td>
+                </tr></>
+            )} */}
+          </tbody>
+        </table>)}
+
+        {r_id && (
+        <table className="w-full border-collapse border border-black mb-2 text-xs print:text-[7pt]">
+          <thead>
+            <tr>
+              <th className="border border-black p-1 print:p-[2px]">Description</th>
+              <th className="border border-black p-1 print:p-[2px]">Rate</th>
+              <th className="border border-black p-1 print:p-[2px]">Amount</th>
+            </tr>
+          </thead>
+          <tbody> 
             {/* Checking if 'student' exists */}
             {r_id && (
               <>
@@ -517,19 +689,24 @@ const FeeCollection = () => {
         </div>
       </div>
       <div className="flex">
-          <div className="mt-2 text-xs print:text-[7pt]">
-            <span className="font-bold">Authority Seal And Signature</span>
-          </div>
+        <div className="mt-2 text-xs print:text-[7pt]">
+          <span className="font-bold">Authority Seal And Signature</span>
         </div>
+      </div>
     </div>
   );
 
   return (
     <>
-    {!r_id &&(
-      <div className="print:hidden">
-        <Demo3 onAddStudent={handleAddStudent} />
-      </div>)}
+      {!r_id && (
+        <div className="print:hidden">
+          <Demo3 onAddStudent={handleAddStudent} />
+        </div>)}
+
+      <div>
+        {errorMessage && <div className="error-message text-red-500">{errorMessage}</div>}
+        {successMessage && <div className="success-message text-green-500">{successMessage}</div>}
+      </div>
       <div className="flex justify-between items-center">
         <div className="flex">
         </div>

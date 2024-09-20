@@ -8,6 +8,7 @@ import AuthLayout from "@/layouts/AuthLayout";
 import FeeCollection from "@/pages/FeeCollection";
 import RegisterStudent from "@/pages/RegisteredStudent";
 import FeeInvoice from "@/pages/FeeInvoice";
+import Demo4 from "@/pages/Demo4";
 
 const router =  createBrowserRouter([
     {
@@ -54,6 +55,10 @@ const router =  createBrowserRouter([
                 element: <LoginPage />
             }
         ]
+    },
+    {
+        path: '/demo',
+        element: <Demo4/>
     }
 
 

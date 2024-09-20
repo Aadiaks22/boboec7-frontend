@@ -25,8 +25,8 @@ interface Student {
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 const ITEMS_PER_PAGE = 10;
-const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
-const statuses = ["active", "dropped out", "on hold", "graduate"];
+//const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
+//const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
 
 
 
@@ -131,7 +131,8 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
                                         <TableCell>{student.contact_number}</TableCell>
                                         <TableCell>{student.course}</TableCell>
                                         <TableCell>
-                                            <select
+                                            {student.level}
+                                            {/* <select
                                                 value={student.level}
                                                 onChange={(e) => console.log(`Changed level for ${student._id}: ${e.target.value}`)}
                                                 className="w-full p-2 border rounded"
@@ -139,10 +140,11 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
                                                 {levels.map(level => (
                                                     <option key={level} value={level}>{level}</option>
                                                 ))}
-                                            </select>
+                                            </select> */}
                                         </TableCell>
                                         <TableCell>
-                                            <select
+                                            {student.status}
+                                            {/* <select
                                                 value={student.status}
                                                 onChange={(e) => console.log(`Changed status for ${student._id}: ${e.target.value}`)}
                                                 className="w-full p-2 border rounded"
@@ -150,7 +152,7 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
                                                 {statuses.map(status => (
                                                     <option key={status} value={status}>{status}</option>
                                                 ))}
-                                            </select>
+                                            </select> */}
                                         </TableCell>
                                         <TableCell>
                                             <Button variant="outline" onClick={() => handleAddClick(student._id)}>Add</Button>

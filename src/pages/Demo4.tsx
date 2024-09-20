@@ -125,7 +125,6 @@ const ShowReceipt: React.FC = () => {
               <TableHead>Receipt Number</TableHead>
               <TableHead>Customer Name</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Paid Upto</TableHead>
               <TableHead>Net Amount</TableHead>
               <TableHead>View Receipt</TableHead>
             </TableRow>
@@ -136,11 +135,10 @@ const ShowReceipt: React.FC = () => {
                 <TableCell>{invoice.reciept_number}</TableCell>
                 <TableCell>{invoice.name}</TableCell>
                 <TableCell>{new Date(invoice.date).toLocaleString()}</TableCell>
-                <TableCell>{invoice.paid_upto} Level</TableCell>
                 <TableCell>{invoice.net_amount}</TableCell>
                 <TableCell>
-                  <a href={`/backend/public${invoice.reciept_img}`} target="_blank">
-                    <img src={`/backend/public${invoice.reciept_img}`} width="50" height="50" alt="Receipt Image" className="img img-thumbnail" />
+                  <a href={`backend/public${invoice.reciept_img}`} target="_blank">
+                    <img src={`backend/public${invoice.reciept_img}`} width="50" height="50" alt="Receipt Image" className="img img-thumbnail" />
                   </a>
                 </TableCell>
               </TableRow>
