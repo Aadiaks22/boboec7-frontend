@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+//import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ChevronDown } from 'lucide-react';
@@ -34,13 +35,16 @@ const ITEMS_PER_PAGE = 10;
 const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
 
-export default function StudentManagement({ openPopover }: { openPopover: (id: string) => void }) {
+
+export default function StudentManagement({ openModal }: { openModal: (id: string) => void }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Active'); // Default to Active
+  // const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  // const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -255,6 +259,14 @@ export default function StudentManagement({ openPopover }: { openPopover: (id: s
     saveAs(blob, "registered_students_report.xlsx");
   };
 
+  // const openModal = (id: string) => {
+  //   const student = students.find(s => s._id === id)
+  //   if (student) {
+  //     setSelectedStudent(student)
+  //     setIsModalOpen(true)
+  //   }
+  // }
+
   return (
     <div className="main-content p-4 max-w-full mx-auto">
       <h1 className="text-2xl font-semibold mb-4">All Registered Students</h1>
@@ -339,7 +351,7 @@ export default function StudentManagement({ openPopover }: { openPopover: (id: s
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openPopover(student._id)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openModal(student._id)}>Edit</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
