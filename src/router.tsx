@@ -9,6 +9,8 @@ import FeeCollection from "@/pages/FeeCollection";
 import RegisterStudent from "@/pages/RegisteredStudent";
 import FeeInvoice from "@/pages/FeeInvoice";
 import Demo4 from "@/pages/Demo4";
+import Demo from "./pages/Demo";
+import Dashboard from "./pages/Dashboard";
 
 const router =  createBrowserRouter([
     {
@@ -20,7 +22,11 @@ const router =  createBrowserRouter([
         element: <DashboardLayout />,
         children:[
             {
-                path: 'home',
+                path: '',
+                element: <Dashboard />
+            },
+            {
+                path: 'kids-dictation',
                 element: <HomePage />
             },
             {
@@ -57,8 +63,12 @@ const router =  createBrowserRouter([
         ]
     },
     {
-        path: '/demo',
+        path: '/demo4',
         element: <Demo4/>
+    },
+    {
+        path: '/demo',
+        element: <Demo/>
     }
 
 

@@ -252,7 +252,7 @@ export default function RegisterStudent() {
                     </Select>
                   </div>
                 </div>
-                <Button type="submit" className="w-full">Update Student</Button>
+                <Button type="submit" className="w-full bg-[#02a0a0]">Update Student</Button>
               </form>
             </div>
           </ScrollArea>

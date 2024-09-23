@@ -101,7 +101,7 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="mr-2"
                 />
-                <Button onClick={() => setSearchQuery('')}>Clear</Button>
+                <Button onClick={() => setSearchQuery('')} className='bg-[#02a0a0]'>Clear</Button>
             </div>
 
             {!studentAdded && searchQuery && filteredStudents.length > 0 && (
@@ -167,7 +167,7 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
             )}
             {/* Show message after student is added */}
             {studentAdded && (
-                <p className="text-green-500">Student has been added successfully. You can now proceed to the fee collection page.</p>
+                <p className="text-green-500">Student has been added successfully. You can now proceed to the fee collection.</p>
             )}
 
             {/* Show no students found message when search query doesn't match */}

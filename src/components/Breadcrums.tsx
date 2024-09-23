@@ -5,7 +5,7 @@ const Breadcrumbs = () => {
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
-    <nav className="text-sm text-muted-foreground">
+    <nav className="text-sm text-muted-foreground text-[#ef8600]">
       <ul className="flex space-x-2">
         <li>
           {pathnames.length > 0 && <span> </span>}

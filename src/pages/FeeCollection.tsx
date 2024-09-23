@@ -222,7 +222,7 @@ const FeeCollection = () => {
       setErrorMessage('Missing receipt number');
       return;
     }
-    if(!student){
+    if (!student) {
       setErrorMessage('Missing Student Details');
       return;
     }
@@ -347,7 +347,7 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex">
-        {!r_id && (<LevelDropdown
+          {!r_id && (<LevelDropdown
             level={student?.level || "1"}
             onLevelChange={handleLevelChange}
           />)}
@@ -528,7 +528,7 @@ const FeeCollection = () => {
           </tbody>
         </table>)}
 
-        {r_id && (
+      {r_id && (
         <table className="w-full border-collapse border border-black mb-2 text-xs print:text-[7pt]">
           <thead>
             <tr>
@@ -537,7 +537,7 @@ const FeeCollection = () => {
               <th className="border border-black p-1 print:p-[2px]">Amount</th>
             </tr>
           </thead>
-          <tbody> 
+          <tbody>
             {/* Checking if 'student' exists */}
             {r_id && (
               <>
@@ -697,39 +697,39 @@ const FeeCollection = () => {
   );
 
   return (
-    <>
-      {!r_id && (
-        <div className="print:hidden">
-          <Demo3 onAddStudent={handleAddStudent} />
-        </div>)}
+    <div className="border mt-2 p-4 bg-white shadow">
+      <div className="w-full max-w-[297mm] mx-auto p-4">
+        {!r_id && (
+          <div className="print:hidden">
+            <Demo3 onAddStudent={handleAddStudent} />
+          </div>)}
 
-      <div>
-        {errorMessage && <div className="error-message text-red-500">{errorMessage}</div>}
-        {successMessage && <div className="success-message text-green-500">{successMessage}</div>}
-      </div>
-      <div className="flex justify-between items-center">
-        <div className="flex">
+        <div>
+          {errorMessage && <div className="error-message text-red-500">{errorMessage}</div>}
+          {successMessage && <div className="success-message text-green-500 print:hidden ml-4">{successMessage}</div>}
         </div>
-        <div className="flex space-x-4 max-w-2xl mt-4 print:hidden" style={{ marginTop: "0px" }}>
-          <Button onClick={handleSave} className="flex items-center">
-            <SaveIcon className="mr-2 h-4 w-4" />
-            Save
-          </Button>
-          <Button onClick={handlePrint} className="flex items-center">
-            <PrinterIcon className="mr-2 h-4 w-4" />
-            Print
-          </Button>
+        <div className="flex justify-between items-center">
+          <div className="flex">
+          </div>
+          <div className="flex space-x-4 max-w-2xl mt-4 print:hidden" style={{ marginTop: "0px" }}>
+            <Button onClick={handleSave} className="flex items-center bg-[#02a0a0]">
+              <SaveIcon className="mr-2 h-4 w-4" />
+              Save
+            </Button>
+            <Button onClick={handlePrint} className="flex items-center bg-[#02a0a0]">
+              <PrinterIcon className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+          </div>
         </div>
       </div>
-
-
       <div id="receipt" ref={receiptRef} className="w-full max-w-[297mm] mx-auto p-4 print:p-0 print:max-w-full">
         <div className="print:flex print:flex-row print:justify-between">
           {renderReceipt(1)}
           {renderReceipt(2)}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
