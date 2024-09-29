@@ -55,18 +55,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-orange-200 via-orange-300 to-orange-400 flex items-center justify-center p-4">
+      <Card className="w-full max-w-5xl bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden border border-orange-300">
         <CardContent className="p-6 sm:p-10">
           <div className="flex flex-col lg:flex-row items-center gap-8">
-            <div className="flex-shrink-0 transform transition-all duration-500 ease-in-out hover:scale-105">
+            <div className="flex-shrink-0 transform transition-all duration-500 ease-in-out hover:scale-105 lg:w-1/2">
               <img
                 src="/images/bob-intro1.jpg"
                 alt="BOB"
-                className="h-64 w-auto sm:h-80 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300"
+                className="w-full h-auto max-h-[400px] object-cover rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300"
               />
             </div>
-            <div className="flex-grow">
+            <div className="flex-grow lg:w-1/2">
               <div className="flex flex-col items-center lg:items-start gap-4 mb-6">
                 <img
                   src="/images/brainobrain-logo.png"
@@ -79,19 +79,19 @@ export default function LoginPage() {
                     transition: 'transform 0.5s ease-in-out'
                   }}
                 />
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 tracking-tight text-center lg:text-left">
+                <h1 className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-tight text-center lg:text-left">
                   Welcome to{" "}
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-500">
                     BRAINOBRAIN-OEC7
                   </span>
                 </h1>
-                <p className="text-gray-600 text-center sm:text-left max-w-md">
-                Unlock your potential with our innovative learning techniques and expert guidance.
-              </p>
+                <p className="text-orange-700 text-center lg:text-left max-w-md">
+                  Unlock your potential with our innovative learning techniques and expert guidance.
+                </p>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto lg:mx-0">
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-gray-700">Phone Number</Label>
+                  <Label htmlFor="phone" className="text-orange-700">Phone Number</Label>
                   <Input
                     id="phone"
                     name="phone"
@@ -100,25 +100,25 @@ export default function LoginPage() {
                     onChange={onChange}
                     placeholder="Enter your phone number"
                     required
-                    className="bg-white/50 backdrop-blur-sm"
+                    className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dobYear" className="text-gray-700">Year of Birth</Label>
+                  <Label htmlFor="dobYear" className="text-orange-700">Year of Birth</Label>
                   <Input
                     id="dobYear"
                     name="dobYear"
-                    type="number"
+                    type="password"
                     value={credentials.dobYear}
                     onChange={onChange}
                     placeholder="Enter your year of birth"
                     required
-                    className="bg-white/50 backdrop-blur-sm"
+                    className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
                 >
                   Login
                 </Button>
