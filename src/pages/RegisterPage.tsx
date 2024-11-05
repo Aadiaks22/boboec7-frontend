@@ -1,98 +1,86 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { jwtDecode } from "jwt-decode"
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { GraduationCapIcon, UserIcon } from "lucide-react"
+import { useRef, useState } from "react"
+import { useMutation } from "@tanstack/react-query"
+import { createuser } from "@/http/api"
+import { Input } from "@/components/ui/input"
+import { jwtDecode } from "jwt-decode"
 
-const BASE_URL = import.meta.env.VITE_BASE_URL
-
-interface Credentials {
-  name: string
-  student_class: string
-  dob: string
-  school_name: string
-  mother_name: string
-  father_name: string
-  contact_number: string
-  secondary_contact_number: string
-  email: string
-  address: string
-  city: string
-  course: string
-  level: string
-  status: string
-  role: string
-}
-
-export default function StudentRegistrationForm() {
-  const [credentials, setCredentials] = useState<Credentials>({
-    name: "",
-    student_class: "",
-    dob: "",
-    school_name: "",
-    mother_name: "",
-    father_name: "",
-    contact_number: "",
-    secondary_contact_number: "",
-    email: "",
-    address: "",
-    city: "",
-    course: "",
-    level: "",
-    status: "",
-    role: "",
-  })
+const StudentRegistrationForm = () => {
   const navigate = useNavigate()
+  
+  const [course, setCourse] = useState<string | undefined>(undefined)
+
+  // References for inputs
+  const nameRef = useRef<HTMLInputElement>(null)
+  const student_classRef = useRef<HTMLInputElement>(null)
+  const dobRef = useRef<HTMLInputElement>(null)
+  const school_nameRef = useRef<HTMLInputElement>(null)
+  const mother_nameRef = useRef<HTMLInputElement>(null)
+  const father_nameRef = useRef<HTMLInputElement>(null)
+  const contact_numberRef = useRef<HTMLInputElement>(null)
+  const secondary_contact_numberRef = useRef<HTMLInputElement>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const addressRef = useRef<HTMLTextAreaElement>(null)
+  const cityRef = useRef<HTMLInputElement>(null)
+
+  // Mutation for creating user
+  const mutation = useMutation({
+    mutationFn: createuser,
+    onSuccess: (data) => {
+      console.log("User created successfully")
+      const { user } = jwtDecode<{ user: { id: string } }>(data.authToken)
+      console.log("Student ID:", user.id)
+      if (user.id) {
+        navigate(`/dashboard/fee-collection/${user.id}`)
+      } else {
+        console.error("User ID is undefined")
+      }
+    },
+    onError: (error) => {
+      console.error("CreateUser failed:", error)
+    },
+  })
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    try {
-      const token = localStorage.getItem("token")
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      }
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
-      }
-
-      const response = await fetch(`${BASE_URL}/api/auth/createuser`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(credentials),
-      })
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok")
-      }
-
-      const json = await response.json()
-
-      if (json.success) {
-        const { user } = jwtDecode<{ user: { id: string } }>(json.authToken)
-        console.log("Student ID:", user.id)
-
-        if (user.id) {
-          navigate(`/dashboard/fee-collection/${user.id}`)
-        } else {
-          console.error("User ID is undefined")
-        }
-      } else {
-        console.error("Invalid registration")
-      }
-    } catch (error) {
-      console.error("An error occurred:", error)
+    const name = nameRef.current?.value
+    const student_class = student_classRef.current?.value
+    const dob = dobRef.current?.value
+    const school_name = school_nameRef.current?.value
+    const mother_name = mother_nameRef.current?.value
+    const father_name = father_nameRef.current?.value
+    const contact_number = contact_numberRef.current?.value
+    const secondary_contact_number = secondary_contact_numberRef.current?.value
+    const email = emailRef.current?.value
+    const address = addressRef.current?.value
+    const city = cityRef.current?.value
+    
+    if (!name || !student_class || !dob || !school_name || !mother_name || !father_name || !contact_number || !secondary_contact_number || !email || !address || !city || !course) {
+      return alert("Please complete all fields")
     }
-  }
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value })
+    
+    // Execute mutation
+    mutation.mutate({
+      name,
+      student_class,
+      dob,
+      school_name,
+      mother_name,
+      father_name,
+      contact_number,
+      secondary_contact_number,
+      email,
+      address,
+      city,
+      course,
+    })
   }
 
   return (
@@ -109,57 +97,58 @@ export default function StudentRegistrationForm() {
         </CardHeader>
         <CardContent>
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-purple-700">Full Name</Label>
-                <Input id="name" name="name" placeholder="John Doe" required value={credentials.name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={nameRef} id="name" name="name" placeholder="John Doe" required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="student_class" className="text-purple-700">Class</Label>
-                <Input id="student_class" name="student_class" placeholder="10th Grade" required value={credentials.student_class} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={student_classRef} id="student_class" name="student_class" placeholder="10th Grade" required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dob" className="text-purple-700">Date of Birth</Label>
-                <Input id="dob" name="dob" type="date" required value={credentials.dob} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={dobRef} id="dob" name="dob" type="date" required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="school_name" className="text-purple-700">School Name</Label>
-                <Input id="school_name" name="school_name" placeholder="Sunshine High School" required value={credentials.school_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={school_nameRef} id="school_name" name="school_name" placeholder="Sunshine High School" required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="mother_name" className="text-purple-700">Mother's Name</Label>
-                <Input id="mother_name" name="mother_name" placeholder="Jane Doe" required value={credentials.mother_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={mother_nameRef} id="mother_name" name="mother_name" placeholder="Jane Doe" required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="father_name" className="text-purple-700">Father's Name</Label>
-                <Input id="father_name" name="father_name" placeholder="John Doe Sr." required value={credentials.father_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={father_nameRef} id="father_name" name="father_name" placeholder="John Doe Sr." required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact_number" className="text-purple-700">Primary Contact</Label>
-                <Input id="contact_number" name="contact_number" type="tel" placeholder="+1 (555) 123-4567" required value={credentials.contact_number} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={contact_numberRef} id="contact_number" name="contact_number" type="tel" placeholder="+1 (555) 123-4567" required className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="secondary_contact_number" className="text-purple-700">Secondary Contact</Label>
-                <Input id="secondary_contact_number" name="secondary_contact_number" type="tel" placeholder="+1 (555) 987-6543" value={credentials.secondary_contact_number} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={secondary_contact_numberRef} id="secondary_contact_number" name="secondary_contact_number" type="tel" placeholder="+1 (555) 987-6543" className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-purple-700">Email Address</Label>
-                <Input id="email" name="email" type="email" placeholder="john.doe@example.com" value={credentials.email} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={emailRef} id="email" name="email" type="email" placeholder="john.doe@example.com" className="border-purple-300 focus:border-purple-500" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city" className="text-purple-700">City</Label>
-                <Input id="city" name="city" placeholder="New York" required value={credentials.city} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+                <Input ref={cityRef} id="city" name="city" placeholder="New York" required className="border-purple-300 focus:border-purple-500" />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address" className="text-purple-700">Full Address</Label>
-              <Textarea id="address" name="address" placeholder="123 Main St, Apt 4B, New York, NY 10001" required value={credentials.address} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              <Textarea ref={addressRef} id="address" name="address" placeholder="123 Main St, Apt 4B, New York, NY 10001" required className="border-purple-300 focus:border-purple-500" />
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="course" className="text-purple-700">Course</Label>
-                <Select onValueChange={(value) => setCredentials({ ...credentials, course: value })}>
+                <Select onValueChange={(value) => setCourse(value)}>
                   <SelectTrigger id="course" className="border-purple-300 focus:border-purple-500">
                     <SelectValue placeholder="Select Course" />
                   </SelectTrigger>
@@ -170,6 +159,7 @@ export default function StudentRegistrationForm() {
                 </Select>
               </div>
             </div>
+
             <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
               <UserIcon className="w-5 h-5 mr-2" />
               Register Student
@@ -177,19 +167,17 @@ export default function StudentRegistrationForm() {
           </form>
         </CardContent>
       </Card>
+
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-600">
           By registering, you agree to our{" "}
-          <a href="#" className="text-purple-600 hover:underline">
-            Terms of Service
-          </a>{" "}
+          <a href="#" className="text-purple-600 hover:underline">Terms of Service</a>{" "}
           and{" "}
-          <a href="#" className="text-purple-600 hover:underline">
-            Privacy Policy
-          </a>
-          .
+          <a href="#" className="text-purple-600 hover:underline">Privacy Policy</a>.
         </p>
       </div>
     </div>
   )
 }
+
+export default StudentRegistrationForm

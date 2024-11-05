@@ -8,8 +8,6 @@ import AuthLayout from "@/layouts/AuthLayout";
 import FeeCollection from "@/pages/FeeCollection";
 import RegisterStudent from "@/pages/RegisteredStudent";
 import FeeInvoice from "@/pages/FeeInvoice";
-import Demo4 from "@/pages/Demo4";
-import Demo from "./pages/Demo";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./protectedroute";
 
@@ -66,14 +64,6 @@ const router = createBrowserRouter([
         element: <LoginPage />
       }
     ]
-  },
-  {
-    path: '/demo4',
-    element: <Demo4/>
-  },
-  {
-    path: '/demo',
-    element: <Demo/>
   }
 ]);
 

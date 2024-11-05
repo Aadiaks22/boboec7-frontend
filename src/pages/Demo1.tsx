@@ -1,913 +1,195 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import numberToWords from 'number-to-words';
-import { Button } from "@/components/ui/button";
-import { PrinterIcon, SaveIcon } from "lucide-react";
-import './FeeCollection.css';
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { jwtDecode } from "jwt-decode"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { GraduationCapIcon, UserIcon } from "lucide-react"
 
-interface Student {
-  _id: string;
-  student_code: string;
-  name: string;
-  student_class: string;
-  dob: string;
-  school_name: string;
-  mother_name: string;
-  father_name: string;
-  contact_number: string;
-  secondary_contact_number?: string;
-  email: string;
-  address: string;
-  city: string;
-  course: string;
-  level: string;
-  status: string;
-  role: string;
+const BASE_URL = import.meta.env.VITE_BASE_URL
+
+interface Credentials {
+  name: string
+  student_class: string
+  dob: string
+  school_name: string
+  mother_name: string
+  father_name: string
+  contact_number: string
+  secondary_contact_number: string
+  email: string
+  address: string
+  city: string
+  course: string
+  level: string
+  status: string
+  role: string
 }
 
-// Define LevelDropdownProps interface
-interface LevelDropdownProps {
-  level: string;
-  onLevelChange: (level: string) => void;
-}
+export default function StudentRegistrationForm() {
+  const [credentials, setCredentials] = useState<Credentials>({
+    name: "",
+    student_class: "",
+    dob: "",
+    school_name: "",
+    mother_name: "",
+    father_name: "",
+    contact_number: "",
+    secondary_contact_number: "",
+    email: "",
+    address: "",
+    city: "",
+    course: "",
+    level: "",
+    status: "",
+    role: "",
+  })
+  const navigate = useNavigate()
 
-// LevelDropdown component
-const LevelDropdown: React.FC<LevelDropdownProps> = ({ level, onLevelChange }) => {
-  return (
-    <div className="flex text-right">
-      <Label className="mt-1 font-bold fs-1" htmlFor="level">Level:</Label>
-      <select
-        id="level"
-        name="level"
-        value={level}
-        onChange={(e) => onLevelChange(e.target.value)}
-        className="w-auto ml-2 border-none bg-transparent"
-        style={{
-          paddingTop: "0px",
-          paddingBottom: "0px",
-          height: "20px",
-          paddingLeft: "0px",
-          paddingRight: "0px",
-          backgroundColor: "transparent",
-          border: "none",
-          fontSize: "inherit"
-        }}
-      >
-        {[...Array(10).keys()].map(i => (
-          <option key={i + 1} value={i + 1}>
-            Level {i + 1}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
 
-
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-const FeeCollection = () => {
-
-  const receiptRef = useRef<HTMLDivElement>(null);
-
-  const handleSave = () => {
-    // Implement save functionality here
-    // For example, you could send the data to your backend API
-    console.log('Saving receipt...');
-    // Add your save logic here
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const [receiptNumber, setReceiptNumber] = useState<number | null>(null);
-
-  useEffect(() => {
-    const fetchReceiptNumber = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/receipt-number`);
-        const data = await response.json();
-        setReceiptNumber(data.receiptNumber);
-      } catch (error) {
-        console.error('Error fetching receipt number:', error);
-      }
-    };
-
-    fetchReceiptNumber();
-  }, []);
-
-  const { id } = useParams<{ id: string }>(); // Extract the student ID from the route
-  const [student, setStudent] = useState<Student | null>(null); // State to store student details
-  const [error, setError] = useState<string | null>(null); // State to store error message
-  const [currentDate, setCurrentDate] = useState<string>("");
-
-  // Course Fee, Exercise Book Amount, and Tax States
-  const [courseFee, setCourseFee] = useState<number>(0);
-  const [exerciseBookFee, setExerciseBookFee] = useState<number>(0);
-  const [kitFee, setkitFee] = useState<number>(0);
-  const [jacketFee, setjacketFee] = useState<number>(0);
-  const [centralTax9, setCentralTax9] = useState<number>(0);
-  const [stateTax9, setStateTax9] = useState<number>(0);
-  const [centralTax6, setCentralTax6] = useState<number>(0);
-  const [stateTax6, setStateTax6] = useState<number>(0);
-  const [centralTax25, setCentralTax25] = useState<number>(0);
-  const [stateTax25, setStateTax25] = useState<number>(0);
-  const [centralTax06, setCentralTax06] = useState<number>(0);
-  const [stateTax06, setStateTax06] = useState<number>(0);
-  const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [totalAmountInWords, setTotalAmountInWords] = useState<string>("");
-
-  useEffect(() => {
-    // Set the current date in "DD/MM/YYYY" format
-    const today = new Date();
-    const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-    setCurrentDate(formattedDate);
-
-    const fetchStudent = async () => {
-      if (!id) {
-        setError("No student ID provided");
-        return;
+    try {
+      const token = localStorage.getItem("token")
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
       }
 
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/user/${id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch student details");
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+
+      const response = await fetch(`${BASE_URL}/api/auth/createuser`, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(credentials),
+      })
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok")
+      }
+
+      const json = await response.json()
+
+      if (json.success) {
+        const { user } = jwtDecode<{ user: { id: string } }>(json.authToken)
+        console.log("Student ID:", user.id)
+
+        if (user.id) {
+          navigate(`/dashboard/fee-collection/${user.id}`)
+        } else {
+          console.error("User ID is undefined")
         }
-        const data = await response.json();
-
-        //console.log("Student Data:", data); // Log the student data to the console
-
-        setStudent(data); // Set the fetched student details
-      } catch (error) {
-        setError("Error fetching student details");
-        console.error("Error fetching student:", error);
+      } else {
+        console.error("Invalid registration")
       }
-    };
-
-    fetchStudent();
-  }, [id]);
-
-  // Calculate 9% tax for course fee and 6% tax for exercise book fee
-  useEffect(() => {
-    const calculatedCentralTax9 = courseFee * 0.09;
-    const calculatedStateTax9 = courseFee * 0.09;
-    const calculatedCentralTax6 = exerciseBookFee * 0.06;
-    const calculatedStateTax6 = exerciseBookFee * 0.06;
-    const calculatedCentralTax25 = kitFee * 0.025;
-    const calculatedStateTax25 = kitFee * 0.025;
-    const calculatedCentralTax06 = jacketFee * 0.06;
-    const calculatedStateTax06 = jacketFee * 0.06;
-
-    setCentralTax9(calculatedCentralTax9);
-    setStateTax9(calculatedStateTax9);
-    setCentralTax6(calculatedCentralTax6);
-    setStateTax6(calculatedStateTax6);
-    setCentralTax25(calculatedCentralTax25);
-    setStateTax25(calculatedStateTax25);
-    setCentralTax06(calculatedCentralTax06);
-    setStateTax06(calculatedStateTax06);
-
-
-
-    // Calculate total amount (Course Fee + Exercise Book Fee + All Taxes)
-    const total = courseFee + exerciseBookFee + kitFee + jacketFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax25 + calculatedStateTax25 + calculatedCentralTax06 + calculatedStateTax06;
-    setTotalAmount(total);
-    setTotalAmountInWords(numberToWords.toWords(total).toUpperCase()); // Convert number to words
-  }, [courseFee, exerciseBookFee, kitFee, jacketFee]);
-
-  const handleLevelChange = (newLevel: string) => {
-    if (student) {
-      setStudent({ ...student, level: newLevel });
+    } catch (error) {
+      console.error("An error occurred:", error)
     }
-  };
+  }
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value })
+  }
 
   return (
-    <>
-      <div className="max-w-2xl mx-auto mt-4 flex justify-end space-x-4">
-        <Button onClick={handleSave} className="flex items-center">
-          <SaveIcon className="mr-2 h-4 w-4" />
-          Save
-        </Button>
-        <Button onClick={handlePrint} className="flex items-center">
-          <PrinterIcon className="mr-2 h-4 w-4" />
-          Print
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-200 py-12 px-4 sm:px-6 lg:px-8 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center bg-blend-overlay">
+      <Card className="w-full max-w-4xl mx-auto mt-4 shadow-2xl bg-white/90 backdrop-blur-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-purple-700 flex items-center justify-center">
+            <GraduationCapIcon className="w-8 h-8 mr-2" />
+            Student Registration
+          </CardTitle>
+          <CardDescription className="text-lg text-gray-600">
+            Embark on a journey of knowledge and growth. Fill out the form below to register a new student.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-purple-700">Full Name</Label>
+                <Input id="name" name="name" placeholder="John Doe" required value={credentials.name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="student_class" className="text-purple-700">Class</Label>
+                <Input id="student_class" name="student_class" placeholder="10th Grade" required value={credentials.student_class} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dob" className="text-purple-700">Date of Birth</Label>
+                <Input id="dob" name="dob" type="date" required value={credentials.dob} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="school_name" className="text-purple-700">School Name</Label>
+                <Input id="school_name" name="school_name" placeholder="Sunshine High School" required value={credentials.school_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mother_name" className="text-purple-700">Mother's Name</Label>
+                <Input id="mother_name" name="mother_name" placeholder="Jane Doe" required value={credentials.mother_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="father_name" className="text-purple-700">Father's Name</Label>
+                <Input id="father_name" name="father_name" placeholder="John Doe Sr." required value={credentials.father_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact_number" className="text-purple-700">Primary Contact</Label>
+                <Input id="contact_number" name="contact_number" type="tel" placeholder="+1 (555) 123-4567" required value={credentials.contact_number} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondary_contact_number" className="text-purple-700">Secondary Contact</Label>
+                <Input id="secondary_contact_number" name="secondary_contact_number" type="tel" placeholder="+1 (555) 987-6543" value={credentials.secondary_contact_number} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-purple-700">Email Address</Label>
+                <Input id="email" name="email" type="email" placeholder="john.doe@example.com" value={credentials.email} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city" className="text-purple-700">City</Label>
+                <Input id="city" name="city" placeholder="New York" required value={credentials.city} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-purple-700">Full Address</Label>
+              <Textarea id="address" name="address" placeholder="123 Main St, Apt 4B, New York, NY 10001" required value={credentials.address} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="course" className="text-purple-700">Course</Label>
+                <Select onValueChange={(value) => setCredentials({ ...credentials, course: value })}>
+                  <SelectTrigger id="course" className="border-purple-300 focus:border-purple-500">
+                    <SelectValue placeholder="Select Course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BRAINOBRAIN">BRAINOBRAIN</SelectItem>
+                    <SelectItem value="MENTAL MATH">MENTAL MATH</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
+              <UserIcon className="w-5 h-5 mr-2" />
+              Register Student
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      <div className="mt-8 text-center">
+        <p className="text-sm text-gray-600">
+          By registering, you agree to our{" "}
+          <a href="#" className="text-purple-600 hover:underline">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="#" className="text-purple-600 hover:underline">
+            Privacy Policy
+          </a>
+          .
+        </p>
       </div>
-      <div id="receipt" ref={receiptRef} className="w-full max-w-[210mm] mx-auto p-4 border border-black print:border-none print-full-width">
-      <div className="max-w-2xl mx-auto p-4 border border-black">
-        <div className="text-xl font-bold text-center my-4">
-          OEC-7 ACADEMY (Student Copy)
-        </div>
-        <div className="text-sm text-center mb-4">
-          (GST IN - 09AJUPB7083R1Z5 )
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentCode">Student Code:</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="studentCode"
-              name="studentCode"
-              value={student?.student_code || ""} // Bind student ID (student code)
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-          <div className="flex text-right">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentCode">Receipt No. :</Label>
-            <Input className="w-auto ml-2 border-none bg-transparent" id="receiptNumber" name="receiptNumber"
-              value={receiptNumber || ''}
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }} />
-          </div>
-          <div className="flex">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentName">Student Name:</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="studentName"
-              name="studentName"
-              value={student?.name || ""} // Bind student name
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-          <div className="flex text-right">
-            <Label className="mt-1 font-bold fs-1" htmlFor="courseName">Course Name:</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="courseName"
-              name="courseName"
-              value={student?.course || ""} // Bind course name
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-          <div className="flex">
-            <LevelDropdown
-              level={student?.level || "1"}
-              onLevelChange={handleLevelChange}
-            />
-          </div>
-          <div className="flex text-right">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentCode">Date :</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="date"
-              name="date"
-              value={currentDate} // Set current date here
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-        </div>
-
-        <table className="w-full border-collapse border border-black mb-4">
-          <thead>
-            <tr>
-              <th className="border border-black p-2">Description</th>
-              <th className="border border-black p-2">Rate</th>
-              <th className="border border-black p-2">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ height: '40px' }}>
-              <td className="border border-black p-2">Course Fee</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2" style={{ width: '177.333334px', height: '30px' }}>
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={courseFee}
-                  onChange={(e) => setCourseFee(Number(e.target.value))}
-                /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">9%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax9.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">9%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={stateTax9.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2">Exercise Book</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={exerciseBookFee}
-                onChange={(e) => setExerciseBookFee(Number(e.target.value))}
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax6.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2">
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={stateTax6.toFixed(2)}
-                  readOnly
-                /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2">Kit Fee</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"><Input
-                name="kitFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={kitFee}
-                onChange={(e) => setkitFee(Number(e.target.value))}
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">2.5%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax25.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">2.5%</td>
-              <td className="border border-black p-2">
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={stateTax25.toFixed(2)}
-                  readOnly
-                /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2">Jacket Fee</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"><Input
-                name="jacketFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={jacketFee}
-                onChange={(e) => setjacketFee(Number(e.target.value))}
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax06.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2">
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={stateTax06.toFixed(2)}
-                  readOnly
-                /></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex">
-            <Label className="mt-3 font-bold fs-1" htmlFor="paymentMode">Mode of Payment :</Label>
-            <select className="w-auto ml-2 border-none bg-transparent" id="paymentMode" name="paymentMode">
-              <option value="cash">Cash</option>
-              <option value="online">Online</option>
-            </select>
-          </div>
-
-          <div className="flex text-center">
-            <Label className="mt-3 font-bold fs-1" htmlFor="studentCode" style={{ float: 'right' }}>Total Amount :</Label>
-            <Input className="w-auto ml-2 border-none bg-transparent" id="studentCode" name="studentCode" style={{
-              paddingTop: '4px',
-              paddingBottom: '4px',
-              paddingRight: '8px',
-              paddingLeft: '8px',
-              width: '117.33px',
-              float: 'right'
-            }}
-              value={totalAmount.toFixed(2)}
-              readOnly />
-          </div>
-          <div></div>
-          <div className="flex text-center">
-            <Label className="mt-1 font-bold fs-1" htmlFor="amountInWords">Amount in Words :</Label>
-            <textarea
-              className="w-auto ml-2 border-none bg-transparent"
-              id="amountInWords"
-              name="amountInWords"
-              value={totalAmountInWords}
-              readOnly
-              rows={3} // Adjust the number of rows as needed
-              style={{ resize: 'none' }} // Prevent resizing if not needed
-            />
-          </div>
-
-        </div>
-        <div className="mt-8">
-          <span className="font-bold">Authority Seal And Signature</span>
-        </div>
-      </div>
-      <div className="max-w-2xl mx-auto p-4 border border-black">
-        <div className="text-xl font-bold text-center my-4">
-          OEC-7 ACADEMY (Student Copy)
-        </div>
-        <div className="text-sm text-center mb-4">
-          (GST IN - 09AJUPB7083R1Z5 )
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentCode">Student Code:</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="studentCode"
-              name="studentCode"
-              value={student?.student_code || ""} // Bind student ID (student code)
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-          <div className="flex text-right">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentCode">Receipt No. :</Label>
-            <Input className="w-auto ml-2 border-none bg-transparent" id="receiptNumber" name="receiptNumber"
-              value={receiptNumber || ''}
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }} />
-          </div>
-          <div className="flex">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentName">Student Name:</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="studentName"
-              name="studentName"
-              value={student?.name || ""} // Bind student name
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-          <div className="flex text-right">
-            <Label className="mt-1 font-bold fs-1" htmlFor="courseName">Course Name:</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="courseName"
-              name="courseName"
-              value={student?.course || ""} // Bind course name
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-          <div className="flex">
-            <LevelDropdown
-              level={student?.level || "1"}
-              onLevelChange={handleLevelChange}
-            />
-          </div>
-          <div className="flex text-right">
-            <Label className="mt-1 font-bold fs-1" htmlFor="studentCode">Date :</Label>
-            <Input
-              className="w-auto ml-2 border-none bg-transparent"
-              id="date"
-              name="date"
-              value={currentDate} // Set current date here
-              readOnly
-              style={{
-                paddingTop: "0px",
-                paddingBottom: "0px",
-                height: "20px",
-                paddingLeft: "0px",
-                paddingRight: "0px"
-              }}
-            />
-          </div>
-        </div>
-
-        <table className="w-full border-collapse border border-black mb-4">
-          <thead>
-            <tr>
-              <th className="border border-black p-2">Description</th>
-              <th className="border border-black p-2">Rate</th>
-              <th className="border border-black p-2">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ height: '40px' }}>
-              <td className="border border-black p-2">Course Fee</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2" style={{ width: '177.333334px', height: '30px' }}>
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  readOnly
-                  value={courseFee}
-                  onChange={(e) => setCourseFee(Number(e.target.value))}
-                /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">9%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax9.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">9%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={stateTax9.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2">Exercise Book</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                readOnly
-                value={exerciseBookFee}
-                onChange={(e) => setExerciseBookFee(Number(e.target.value))}
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax6.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2">
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={stateTax6.toFixed(2)}
-                  readOnly
-                /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2">Kit Fee</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"><Input
-                name="kitFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                readOnly
-                value={kitFee}
-                onChange={(e) => setkitFee(Number(e.target.value))}
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">2.5%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax25.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">2.5%</td>
-              <td className="border border-black p-2">
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={stateTax25.toFixed(2)}
-                  readOnly
-                /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2">Jacket Fee</td>
-              <td className="border border-black p-2"></td>
-              <td className="border border-black p-2"><Input
-                name="jacketFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                readOnly
-                value={jacketFee}
-                onChange={(e) => setjacketFee(Number(e.target.value))}
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">Central Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2"><Input
-                name="courseFee"
-                className="w-40 text-center border-none bg-transparent"
-                style={{
-                  float: 'right',
-                  paddingBottom: "0px",
-                  paddingTop: "0px",
-                  height: "25px"
-                }}
-                value={centralTax06.toFixed(2)}
-                readOnly
-              /></td>
-            </tr>
-            <tr>
-              <td className="border border-black p-2 pl-8">State Tax</td>
-              <td className="border border-black p-2">6%</td>
-              <td className="border border-black p-2">
-                <Input
-                  name="courseFee"
-                  className="w-40 text-center border-none bg-transparent"
-                  style={{
-                    float: 'right',
-                    paddingBottom: "0px",
-                    paddingTop: "0px",
-                    height: "25px"
-                  }}
-                  value={stateTax06.toFixed(2)}
-                  readOnly
-                /></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex">
-            <Label className="mt-3 font-bold fs-1" htmlFor="paymentMode">Mode of Payment :</Label>
-            <select className="w-auto ml-2 border-none bg-transparent" id="paymentMode" name="paymentMode">
-              <option value="cash">Cash</option>
-              <option value="online">Online</option>
-            </select>
-          </div>
-
-          <div className="flex text-center">
-            <Label className="mt-3 font-bold fs-1" htmlFor="studentCode" style={{ float: 'right' }}>Total Amount :</Label>
-            <Input className="w-auto ml-2 border-none bg-transparent" id="studentCode" name="studentCode" style={{
-              paddingTop: '4px',
-              paddingBottom: '4px',
-              paddingRight: '8px',
-              paddingLeft: '8px',
-              width: '117.33px',
-              float: 'right'
-            }}
-              value={totalAmount.toFixed(2)}
-              readOnly />
-          </div>
-          <div></div>
-          <div className="flex text-center">
-            <Label className="mt-1 font-bold fs-1" htmlFor="amountInWords">Amount in Words :</Label>
-            <textarea
-              className="w-auto ml-2 border-none bg-transparent"
-              id="amountInWords"
-              name="amountInWords"
-              value={totalAmountInWords}
-              readOnly
-              rows={3} // Adjust the number of rows as needed
-              style={{ resize: 'none' }} // Prevent resizing if not needed
-            />
-          </div>
-
-        </div>
-        <div className="mt-8">
-          <span className="font-bold">Authority Seal And Signature</span>
-        </div>
-      </div>
-      </div>
-      <div>
-        <h1>Fee Collection</h1>
-        {error && <p>{error}</p>}
-        {student ? (
-          <pre>{JSON.stringify(student, null, 2)}</pre> // Display student details in JSON format
-        ) : (
-          !error && <p>Loading student details...</p>
-        )}
-      </div>
-    </>
-  );
-};
-
-export default FeeCollection;
+    </div>
+  )
+}
