@@ -1,57 +1,43 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useMutation } from "@tanstack/react-query";
+import { login } from "@/http/api";
+import { LoaderCircle } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-interface Credentials {
-  phone: string;
-  dobYear: string;
-}
-
-export default function LoginPage() {
-  const [credentials, setCredentials] = useState<Credentials>({ phone: "", dobYear: "" });
+const LoginPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const dobYearRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // Mutations
+  const mutation = useMutation({
+    mutationFn: login,
+    onSuccess: (data) => {
+      console.log("Login successful");
+      localStorage.setItem("token", data.authToken);
+      localStorage.setItem("username", data.username);
+      navigate("/dashboard"); // Uncomment if you want navigation
+    },
+    onError: (error) => {
+      console.error("Login failed:", error);
+    },
+  });
 
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contact_number: credentials.phone,
-          password: credentials.dobYear,
-        }),
-      });
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent form from reloading the page
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+    const contact_number = phoneRef.current?.value;
+    const password = dobYearRef.current?.value;
 
-      const json = await response.json();
-
-      if (json.success) {
-        localStorage.setItem("token", json.authToken);
-        localStorage.setItem("username", json.username);
-        navigate("/dashboard");
-      } else {
-        console.error("Invalid credentials");
-      }
-    } catch (error) {
-      console.error('An error occurred:', error);
+    if (!contact_number || !password) {
+      return alert("Please enter Contact Number and Year of Birth");
     }
-  };
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    mutation.mutate({ contact_number, password });
   };
 
   return (
@@ -75,8 +61,8 @@ export default function LoginPage() {
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
                   style={{
-                    transform: isHovered ? 'rotate(360deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.5s ease-in-out'
+                    transform: isHovered ? "rotate(360deg)" : "rotate(0deg)",
+                    transition: "transform 0.5s ease-in-out",
                   }}
                 />
                 <h1 className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-tight text-center lg:text-left">
@@ -91,36 +77,37 @@ export default function LoginPage() {
               </div>
               <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto lg:mx-0">
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-orange-700">Phone Number</Label>
+                  <Label htmlFor="phone" className="text-orange-700">
+                    Phone Number
+                  </Label>
                   <Input
+                    ref={phoneRef}
                     id="phone"
-                    name="phone"
                     type="tel"
-                    value={credentials.phone}
-                    onChange={onChange}
                     placeholder="Enter your phone number"
                     required
                     className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dobYear" className="text-orange-700">Year of Birth</Label>
+                  <Label htmlFor="dobYear" className="text-orange-700">
+                    Year of Birth
+                  </Label>
                   <Input
+                    ref={dobYearRef}
                     id="dobYear"
-                    name="dobYear"
                     type="password"
-                    value={credentials.dobYear}
-                    onChange={onChange}
                     placeholder="Enter your year of birth"
                     required
                     className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
                 >
-                  Login
+                  {mutation.isPending && <LoaderCircle className="animate-spin" />}
+                  <span className="ml-2">Login</span>
                 </Button>
               </form>
             </div>
@@ -129,4 +116,6 @@ export default function LoginPage() {
       </Card>
     </div>
   );
-}
+};
+
+export default LoginPage;
