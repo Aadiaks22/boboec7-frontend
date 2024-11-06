@@ -10,6 +10,7 @@ import { useMutation } from "@tanstack/react-query"
 import { createuser } from "@/http/api"
 import { Input } from "@/components/ui/input"
 import { jwtDecode } from "jwt-decode"
+import axios from "axios"
 
 const StudentRegistrationForm = () => {
   const navigate = useNavigate()
@@ -43,7 +44,12 @@ const StudentRegistrationForm = () => {
       }
     },
     onError: (error) => {
-      console.error("CreateUser failed:", error)
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data.error || "An error occurred";
+        alert(errorMessage); // Display the error message to the user
+      } else {
+        console.error("An unknown error occurred:", error);
+      }
     },
   })
 

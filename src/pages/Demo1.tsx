@@ -1,195 +1,360 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { jwtDecode } from "jwt-decode"
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { GraduationCapIcon, UserIcon } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChevronDown, Users, FileSpreadsheet, FileText } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
-const BASE_URL = import.meta.env.VITE_BASE_URL
-
-interface Credentials {
-  name: string
-  student_class: string
-  dob: string
-  school_name: string
-  mother_name: string
-  father_name: string
-  contact_number: string
-  secondary_contact_number: string
-  email: string
-  address: string
-  city: string
-  course: string
-  level: string
-  status: string
-  role: string
+interface Student {
+  _id: string;
+  student_code: string;
+  name: string;
+  student_class: string;
+  dob: string;
+  school_name: string;
+  mother_name: string;
+  father_name: string;
+  contact_number: string;
+  secondary_contact_number?: string;
+  email: string;
+  address: string;
+  city: string;
+  course: string;
+  level: string;
+  status: string;
 }
 
-export default function StudentRegistrationForm() {
-  const [credentials, setCredentials] = useState<Credentials>({
-    name: "",
-    student_class: "",
-    dob: "",
-    school_name: "",
-    mother_name: "",
-    father_name: "",
-    contact_number: "",
-    secondary_contact_number: "",
-    email: "",
-    address: "",
-    city: "",
-    course: "",
-    level: "",
-    status: "",
-    role: "",
-  })
-  const navigate = useNavigate()
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+const ITEMS_PER_PAGE = 10;
+const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
+const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+export default function StudentManagement({ openModal }: { openModal: (id: string) => void }) {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('Active');
 
-    try {
-      const token = localStorage.getItem("token")
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      }
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
-      }
-
-      const response = await fetch(`${BASE_URL}/api/auth/createuser`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(credentials),
-      })
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok")
-      }
-
-      const json = await response.json()
-
-      if (json.success) {
-        const { user } = jwtDecode<{ user: { id: string } }>(json.authToken)
-        console.log("Student ID:", user.id)
-
-        if (user.id) {
-          navigate(`/dashboard/fee-collection/${user.id}`)
-        } else {
-          console.error("User ID is undefined")
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/admin/fetchalluser`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch students');
         }
-      } else {
-        console.error("Invalid registration")
+        const data = await response.json();
+        setStudents(data);
+        setFilteredStudents(data.filter((student: Student) => student.status === 'Active'));
+      } catch (error) {
+        setError('Error fetching student data');
+        console.error('Error fetching students:', error);
       }
-    } catch (error) {
-      console.error("An error occurred:", error)
-    }
-  }
+    };
 
-  const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value })
-  }
+    fetchStudents();
+  }, []);
+
+  useEffect(() => {
+    let filtered = students;
+
+    if (searchQuery.trim() !== '') {
+      const lowercasedQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(student =>
+        student.name.toLowerCase().includes(lowercasedQuery)
+      );
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(student => student.status === statusFilter);
+    }
+
+    setFilteredStudents(filtered);
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, students]);
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
+
+  const handleLevelChange = async (studentId: string, newLevel: string) => {
+    if (!studentId) {
+      console.error('Student ID is required');
+      return;
+    }
+  
+    const authToken = localStorage.getItem('token');
+    if (!authToken) {
+      console.error('No auth token found');
+      return;
+    }
+  
+    try {
+      setStudents(prevStudents =>
+        prevStudents.map(student =>
+          student._id === studentId ? { ...student, level: newLevel } : student
+        )
+      );
+  
+      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': authToken,
+        },
+        body: JSON.stringify({ level: newLevel }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update student level');
+      }
+  
+      const result = await response.json();
+      console.log('Student level updated successfully:', result);
+    } catch (error) {
+      console.error('Error updating student level:', error);
+    }
+  };
+  
+  const handleStatusChange = async (studentId: string, newStatus: string) => {
+    if (!studentId) {
+      console.error('Student ID is required');
+      return;
+    }
+  
+    const authToken = localStorage.getItem('token');
+    if (!authToken) {
+      console.error('No auth token found');
+      return;
+    }
+  
+    try {
+      setStudents(prevStudents =>
+        prevStudents.map(student =>
+          student._id === studentId ? { ...student, status: newStatus } : student
+        )
+      );
+  
+      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': authToken,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update student status');
+      }
+  
+      const result = await response.json();
+      console.log('Student status updated successfully:', result);
+    } catch (error) {
+      console.error('Error updating student status:', error);
+    }
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+
+    const tableColumn = [
+      "Student Code",
+      "Name",
+      "Date of Birth",
+      "Contact Number",
+      "Course",
+      "Level",
+    ];
+    
+    const tableRows = filteredStudents.map(student => [
+      student.student_code,
+      student.name,
+      new Date(student.dob).toLocaleDateString(),
+      student.contact_number,
+      student.course,
+      student.level,
+    ]);
+
+    doc.setFontSize(18);
+    doc.text("Registered Students Report", 14, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Report generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [22, 160, 133], textColor: 255 },
+      alternateRowStyles: { fillColor: [238, 238, 238] },
+      margin: { top: 10 },
+      didDrawPage: (data) => {
+        const pageCount = doc.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.text(`Page ${data.pageNumber} of ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+      }
+    });
+
+    doc.save('registered_student_report.pdf');
+  };
+
+  const generateExcel = () => {
+    const worksheetData = filteredStudents.map((student) => ({
+      "Student Code": student.student_code,
+      "Name": student.name,
+      "Date of Birth": new Date(student.dob).toLocaleDateString(),
+      "Contact Number": student.contact_number,
+      "Course": student.course,
+      "Level": student.level,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+    const workbookOut = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([workbookOut], { type: "application/octet-stream" });
+    saveAs(blob, "registered_students_report.xlsx");
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-200 py-12 px-4 sm:px-6 lg:px-8 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center bg-blend-overlay">
-      <Card className="w-full max-w-4xl mx-auto mt-4 shadow-2xl bg-white/90 backdrop-blur-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-purple-700 flex items-center justify-center">
-            <GraduationCapIcon className="w-8 h-8 mr-2" />
-            Student Registration
-          </CardTitle>
-          <CardDescription className="text-lg text-gray-600">
-            Embark on a journey of knowledge and growth. Fill out the form below to register a new student.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-purple-700">Full Name</Label>
-                <Input id="name" name="name" placeholder="John Doe" required value={credentials.name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="student_class" className="text-purple-700">Class</Label>
-                <Input id="student_class" name="student_class" placeholder="10th Grade" required value={credentials.student_class} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dob" className="text-purple-700">Date of Birth</Label>
-                <Input id="dob" name="dob" type="date" required value={credentials.dob} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="school_name" className="text-purple-700">School Name</Label>
-                <Input id="school_name" name="school_name" placeholder="Sunshine High School" required value={credentials.school_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mother_name" className="text-purple-700">Mother's Name</Label>
-                <Input id="mother_name" name="mother_name" placeholder="Jane Doe" required value={credentials.mother_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="father_name" className="text-purple-700">Father's Name</Label>
-                <Input id="father_name" name="father_name" placeholder="John Doe Sr." required value={credentials.father_name} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact_number" className="text-purple-700">Primary Contact</Label>
-                <Input id="contact_number" name="contact_number" type="tel" placeholder="+1 (555) 123-4567" required value={credentials.contact_number} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="secondary_contact_number" className="text-purple-700">Secondary Contact</Label>
-                <Input id="secondary_contact_number" name="secondary_contact_number" type="tel" placeholder="+1 (555) 987-6543" value={credentials.secondary_contact_number} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-purple-700">Email Address</Label>
-                <Input id="email" name="email" type="email" placeholder="john.doe@example.com" value={credentials.email} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="city" className="text-purple-700">City</Label>
-                <Input id="city" name="city" placeholder="New York" required value={credentials.city} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address" className="text-purple-700">Full Address</Label>
-              <Textarea id="address" name="address" placeholder="123 Main St, Apt 4B, New York, NY 10001" required value={credentials.address} onChange={onChange} className="border-purple-300 focus:border-purple-500" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="course" className="text-purple-700">Course</Label>
-                <Select onValueChange={(value) => setCredentials({ ...credentials, course: value })}>
-                  <SelectTrigger id="course" className="border-purple-300 focus:border-purple-500">
-                    <SelectValue placeholder="Select Course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BRAINOBRAIN">BRAINOBRAIN</SelectItem>
-                    <SelectItem value="MENTAL MATH">MENTAL MATH</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
-              <UserIcon className="w-5 h-5 mr-2" />
-              Register Student
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-600">
-          By registering, you agree to our{" "}
-          <a href="#" className="text-purple-600 hover:underline">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="text-purple-600 hover:underline">
-            Privacy Policy
-          </a>
-          .
-        </p>
-      </div>
-    </div>
+    <Card className="w-full max-w-6xl mx-auto">
+      <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+        <CardTitle className="text-3xl font-bold flex items-center">
+          <Users className="mr-2" />
+          All Registered Students
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        {error && <p className="text-red-500 mb-4 p-2 bg-red-100 rounded">{error}</p>}
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <Input
+              type="text"
+              placeholder="Search by name"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border rounded p-2 bg-white"
+          >
+            {statuses.map(status => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+          <Button onClick={() => setSearchQuery('')} variant="outline">Clear</Button>
+          <Button onClick={generatePDF} className="bg-red-500 hover:bg-red-600">
+            <FileText className="mr-2" />
+            PDF
+          </Button>
+          <Button onClick={generateExcel} className="bg-green-500 hover:bg-green-600">
+            <FileSpreadsheet className="mr-2" />
+            Excel
+          </Button>
+        </div>
+        {students.length > 0 ? (
+          <div className="overflow-hidden rounded-lg border border-gray-200 shadow-lg">
+            <ScrollArea className="h-[500px]">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-blue-500 to-purple-500">
+                    <TableHead className="text-white font-bold">S_Code</TableHead>
+                    <TableHead className="text-white font-bold">Name</TableHead>
+                    <TableHead className="text-white font-bold">Class</TableHead>
+                    <TableHead className="text-white font-bold">Date of Birth</TableHead>
+                    <TableHead className="text-white font-bold">Contact Number</TableHead>
+                    <TableHead className="text-white font-bold">Course</TableHead>
+                    <TableHead className="text-white font-bold">Level</TableHead>
+                    <TableHead className="text-white font-bold">Status</TableHead>
+                    <TableHead className="text-white font-bold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedStudents.map((student, index) => (
+                    <TableRow key={student._id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                      <TableCell className="font-medium">{student.student_code}</TableCell>
+                      <TableCell>{student.name}</TableCell>
+                      <TableCell>{student.student_class}</TableCell>
+                      <TableCell>{new Date(student.dob).toLocaleDateString()}</TableCell>
+                      <TableCell>{student.contact_number}</TableCell>
+                      <TableCell>{student.course}</TableCell>
+                      <TableCell>
+                        <select
+                          value={student?.level || ''}
+                          onChange={(e) => handleLevelChange(student._id, e.target.value)}
+                          className="w-full p-2 border rounded-md bg-white"
+                        >
+                          {levels.map(level => (
+                            <option key={level} value={level}>{level}</option>
+                          ))}
+                        </select>
+                      </TableCell>
+                      <TableCell>
+                        <select
+                          value={student?.status || ''}
+                          onChange={(e) => handleStatusChange(student._id, e.target.value)}
+                          className="w-full p-2 border rounded-md bg-white"
+                        >
+                          {statuses.map(status => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost"><ChevronDown className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => openModal(student._id)}>Edit</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+        ) : (
+          <p className="text-center text-gray-500 my-8">No students found</p>
+        )}
+        <div className="pagination mt-6 flex justify-between items-center">
+          <Button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            Previous
+          </Button>
+          <span className="text-lg font-semibold">Page {currentPage} of {totalPages}</span>
+          <Button 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(currentPage + 1)}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            Next
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

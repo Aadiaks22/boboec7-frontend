@@ -12,6 +12,8 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { fetchStudents, updateStudentData } from '@/http/api'
 
 interface Student {
   _id: string;
@@ -32,7 +34,7 @@ interface Student {
   status: string;
 }
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+//const BASE_URL = import.meta.env.VITE_BASE_URL;
 const ITEMS_PER_PAGE = 10;
 const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
 const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
@@ -45,24 +47,25 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Active');
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/fetchalluser`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch students');
-        }
-        const data = await response.json();
-        setStudents(data);
-        setFilteredStudents(data.filter((student: Student) => student.status === 'Active'));
-      } catch (error) {
-        setError('Error fetching student data');
-        console.error('Error fetching students:', error);
-      }
-    };
+  // Use `useQuery` to fetch student data
+  const { data } = useQuery({
+    queryKey: ['students'],
+    queryFn: fetchStudents,
+  });
 
-    fetchStudents();
-  }, []);
+  useEffect(() => {
+    if (data) {
+      setStudents(data);
+      setFilteredStudents(data.filter((student: Student) => student.status === 'Active'));
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (error) {
+      setError('Error fetching student data');
+      console.error('Error fetching students:', error);
+    }
+  }, [error]);
 
   useEffect(() => {
     let filtered = students;
@@ -87,79 +90,53 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
   const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
 
+  // Update student mutation
+  const updateMutation = useMutation({
+    mutationFn: updateStudentData,
+    onSuccess: () => {
+      console.log("Update Successful");
+
+    },
+    onError: (error) => {
+      console.error("An error occurred:", error);
+    },
+  });
+
   const handleLevelChange = async (studentId: string, newLevel: string) => {
     if (!studentId) {
       console.error('Student ID is required');
       return;
     }
-  
-    const authToken = localStorage.getItem('token');
-    if (!authToken) {
-      console.error('No auth token found');
-      return;
-    }
-  
+
     try {
       setStudents(prevStudents =>
         prevStudents.map(student =>
           student._id === studentId ? { ...student, level: newLevel } : student
         )
       );
-  
-      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'auth-token': authToken,
-        },
-        body: JSON.stringify({ level: newLevel }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to update student level');
-      }
-  
-      const result = await response.json();
-      console.log('Student level updated successfully:', result);
+
+      updateMutation.mutate({ id: studentId, updateData: { level: newLevel } }); // Pass the right types
+
     } catch (error) {
       console.error('Error updating student level:', error);
     }
   };
-  
+
   const handleStatusChange = async (studentId: string, newStatus: string) => {
     if (!studentId) {
       console.error('Student ID is required');
       return;
     }
-  
-    const authToken = localStorage.getItem('token');
-    if (!authToken) {
-      console.error('No auth token found');
-      return;
-    }
-  
+
     try {
       setStudents(prevStudents =>
         prevStudents.map(student =>
           student._id === studentId ? { ...student, status: newStatus } : student
         )
       );
-  
-      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'auth-token': authToken,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to update student status');
-      }
-  
-      const result = await response.json();
-      console.log('Student status updated successfully:', result);
+
+      updateMutation.mutate({ id: studentId, updateData: { status: newStatus } }); // Pass the right types
+
     } catch (error) {
       console.error('Error updating student status:', error);
     }
@@ -176,7 +153,7 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
       "Course",
       "Level",
     ];
-    
+
     const tableRows = filteredStudents.map(student => [
       student.student_code,
       student.name,
@@ -188,7 +165,7 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
 
     doc.setFontSize(18);
     doc.text("Registered Students Report", 14, 22);
-    
+
     doc.setFontSize(11);
     doc.setTextColor(100);
     doc.text(`Report generated on: ${new Date().toLocaleDateString()}`, 14, 30);
@@ -338,16 +315,16 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
           <p className="text-center text-gray-500 my-8">No students found</p>
         )}
         <div className="pagination mt-6 flex justify-between items-center">
-          <Button 
-            disabled={currentPage === 1} 
+          <Button
+            disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
             className="bg-blue-500 hover:bg-blue-600"
           >
             Previous
           </Button>
           <span className="text-lg font-semibold">Page {currentPage} of {totalPages}</span>
-          <Button 
-            disabled={currentPage === totalPages} 
+          <Button
+            disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
             className="bg-blue-500 hover:bg-blue-600"
           >
