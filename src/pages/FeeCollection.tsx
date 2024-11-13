@@ -6,8 +6,8 @@ import numberToWords from 'number-to-words';
 import { Button } from "@/components/ui/button";
 import { PrinterIcon, SaveIcon } from "lucide-react";
 import './FeeCollection.css';
-import './Demo3';
-import Demo3 from "./Demo3";
+import './FeeCollectionSearch';
+import Demo3 from "./FeeCollectionSearch";
 import html2canvas from "html2canvas";
 
 interface Student {

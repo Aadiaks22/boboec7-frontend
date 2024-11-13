@@ -1,360 +1,202 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, Users, FileSpreadsheet, FileText } from 'lucide-react'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
-import { saveAs } from 'file-saver'
+import { useQuery } from 'react-query';
+import { fetchStudents } from '@/http/api';
 
 interface Student {
-  _id: string;
-  student_code: string;
-  name: string;
-  student_class: string;
-  dob: string;
-  school_name: string;
-  mother_name: string;
-  father_name: string;
-  contact_number: string;
-  secondary_contact_number?: string;
-  email: string;
-  address: string;
-  city: string;
-  course: string;
-  level: string;
-  status: string;
+    _id: string;
+    student_code: string;
+    name: string;
+    student_class: string;
+    dob: string;
+    school_name: string;
+    mother_name: string;
+    father_name: string;
+    contact_number: string;
+    secondary_contact_number?: string;
+    email: string;
+    address: string;
+    city: string;
+    course: string;
+    level: string;
+    status: string;
 }
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+//const BASE_URL = import.meta.env.VITE_BASE_URL;
 const ITEMS_PER_PAGE = 10;
-const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
-const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
+//const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
+//const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
 
-export default function StudentManagement({ openModal }: { openModal: (id: string) => void }) {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Active');
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/fetchalluser`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch students');
-        }
-        const data = await response.json();
-        setStudents(data);
-        setFilteredStudents(data.filter((student: Student) => student.status === 'Active'));
-      } catch (error) {
-        setError('Error fetching student data');
-        console.error('Error fetching students:', error);
-      }
-    };
 
-    fetchStudents();
-  }, []);
+export default function StudentManagement({ onAddStudent }: { onAddStudent: (studentId: string) => void }) {
+    const [students, setStudents] = useState<Student[]>([]);
+    const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [studentAdded, setStudentAdded] = useState(false); // Track if a student is added
 
-  useEffect(() => {
-    let filtered = students;
+    // useEffect(() => {
+    //     const fetchStudents = async () => {
+    //         try {
+    //             const response = await fetch(`${BASE_URL}/api/admin/fetchalluser`);
+    //             if (!response.ok) {
+    //                 throw new Error('Failed to fetch students');
+    //             }
+    //             const data = await response.json();
+    //             setStudents(data);
+    //             setFilteredStudents(data); // Initialize with all students
+    //         } catch (error) {
+    //             setError('Error fetching student data');
+    //             console.error('Error fetching students:', error);
+    //         }
+    //     };
 
-    if (searchQuery.trim() !== '') {
-      const lowercasedQuery = searchQuery.toLowerCase();
-      filtered = filtered.filter(student =>
-        student.name.toLowerCase().includes(lowercasedQuery)
-      );
-    }
+    //     fetchStudents();
+    // }, []);
 
-    if (statusFilter) {
-      filtered = filtered.filter(student => student.status === statusFilter);
-    }
-
-    setFilteredStudents(filtered);
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, students]);
-
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
-
-  const handleLevelChange = async (studentId: string, newLevel: string) => {
-    if (!studentId) {
-      console.error('Student ID is required');
-      return;
-    }
-  
-    const authToken = localStorage.getItem('token');
-    if (!authToken) {
-      console.error('No auth token found');
-      return;
-    }
-  
-    try {
-      setStudents(prevStudents =>
-        prevStudents.map(student =>
-          student._id === studentId ? { ...student, level: newLevel } : student
-        )
-      );
-  
-      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'auth-token': authToken,
-        },
-        body: JSON.stringify({ level: newLevel }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to update student level');
-      }
-  
-      const result = await response.json();
-      console.log('Student level updated successfully:', result);
-    } catch (error) {
-      console.error('Error updating student level:', error);
-    }
-  };
-  
-  const handleStatusChange = async (studentId: string, newStatus: string) => {
-    if (!studentId) {
-      console.error('Student ID is required');
-      return;
-    }
-  
-    const authToken = localStorage.getItem('token');
-    if (!authToken) {
-      console.error('No auth token found');
-      return;
-    }
-  
-    try {
-      setStudents(prevStudents =>
-        prevStudents.map(student =>
-          student._id === studentId ? { ...student, status: newStatus } : student
-        )
-      );
-  
-      const response = await fetch(`${BASE_URL}/api/admin/updateuser/${studentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'auth-token': authToken,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to update student status');
-      }
-  
-      const result = await response.json();
-      console.log('Student status updated successfully:', result);
-    } catch (error) {
-      console.error('Error updating student status:', error);
-    }
-  };
-
-  const generatePDF = () => {
-    const doc = new jsPDF();
-
-    const tableColumn = [
-      "Student Code",
-      "Name",
-      "Date of Birth",
-      "Contact Number",
-      "Course",
-      "Level",
-    ];
-    
-    const tableRows = filteredStudents.map(student => [
-      student.student_code,
-      student.name,
-      new Date(student.dob).toLocaleDateString(),
-      student.contact_number,
-      student.course,
-      student.level,
-    ]);
-
-    doc.setFontSize(18);
-    doc.text("Registered Students Report", 14, 22);
-    
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Report generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 40,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [22, 160, 133], textColor: 255 },
-      alternateRowStyles: { fillColor: [238, 238, 238] },
-      margin: { top: 10 },
-      didDrawPage: (data) => {
-        const pageCount = doc.getNumberOfPages();
-        doc.setFontSize(10);
-        doc.text(`Page ${data.pageNumber} of ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
-      }
+    // Use `useQuery` to fetch student data
+    const { data } = useQuery({
+        queryKey: ['students'],
+        queryFn: fetchStudents,
     });
 
-    doc.save('registered_student_report.pdf');
-  };
+    useEffect(() => {
+        if (data) {
+            setStudents(data);
+            setFilteredStudents(data);
+        }
+        else{
+            setError('Error fetching student data');
+        }
+    }, [data]);
 
-  const generateExcel = () => {
-    const worksheetData = filteredStudents.map((student) => ({
-      "Student Code": student.student_code,
-      "Name": student.name,
-      "Date of Birth": new Date(student.dob).toLocaleDateString(),
-      "Contact Number": student.contact_number,
-      "Course": student.course,
-      "Level": student.level,
-    }));
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setFilteredStudents([]); // Clear filtered students if no search query
+        } else {
+            const lowercasedQuery = searchQuery.toLowerCase();
+            const filtered = students.filter(student =>
+                student.name.toLowerCase().includes(lowercasedQuery)
+            );
+            setFilteredStudents(filtered);
+        }
+        setCurrentPage(1); // Reset pagination to page 1
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
-    const workbookOut = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([workbookOut], { type: "application/octet-stream" });
-    saveAs(blob, "registered_students_report.xlsx");
-  };
+        // Reset the studentAdded state when the search query changes
+        if (searchQuery.trim() !== '') {
+            setStudentAdded(false); // Allow table to be visible on new search
+        }
 
-  return (
-    <Card className="w-full max-w-6xl mx-auto">
-      <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-        <CardTitle className="text-3xl font-bold flex items-center">
-          <Users className="mr-2" />
-          All Registered Students
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        {error && <p className="text-red-500 mb-4 p-2 bg-red-100 rounded">{error}</p>}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <Input
-              type="text"
-              placeholder="Search by name"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded p-2 bg-white"
-          >
-            {statuses.map(status => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
-          <Button onClick={() => setSearchQuery('')} variant="outline">Clear</Button>
-          <Button onClick={generatePDF} className="bg-red-500 hover:bg-red-600">
-            <FileText className="mr-2" />
-            PDF
-          </Button>
-          <Button onClick={generateExcel} className="bg-green-500 hover:bg-green-600">
-            <FileSpreadsheet className="mr-2" />
-            Excel
-          </Button>
+    }, [searchQuery, students]);
+
+    // Calculate paginated students
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+    // Handle "Add" button click
+    const handleAddClick = (studentId: string) => {
+        // Send the student ID to the fee collection page via the onAddStudent function
+        onAddStudent(studentId);
+        setSearchQuery(''); // Clear search query
+        setStudentAdded(true); // Set studentAdded to true to hide the table
+    };
+
+    return (
+        <div className="main-content p-4">
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+
+            <div className="mb-4 flex items-center">
+                <Input
+                    type="text"
+                    placeholder="Search by name"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="mr-2"
+                />
+                <Button onClick={() => setSearchQuery('')} className='bg-[#02a0a0]'>Clear</Button>
+            </div>
+
+            {!studentAdded && searchQuery && filteredStudents.length > 0 && (
+                <div className="overflow-hidden rounded-md border flex flex-col h-full">
+                    <ScrollArea className="flex-1 overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[100px] sticky top-0 bg-background">S_Code</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Name</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Class</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Date of Birth</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Contact Number</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Course</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Level</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Status</TableHead>
+                                    <TableHead className="sticky top-0 bg-background">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedStudents.map((student) => (
+                                    <TableRow key={student._id}>
+                                        <TableCell className="font-medium">{student.student_code}</TableCell>
+                                        <TableCell>{student.name}</TableCell>
+                                        <TableCell>{student.student_class}</TableCell>
+                                        <TableCell>{new Date(student.dob).toLocaleDateString()}</TableCell>
+                                        <TableCell>{student.contact_number}</TableCell>
+                                        <TableCell>{student.course}</TableCell>
+                                        <TableCell>
+                                            {student.level}
+                                            {/* <select
+                                                value={student.level}
+                                                onChange={(e) => console.log(`Changed level for ${student._id}: ${e.target.value}`)}
+                                                className="w-full p-2 border rounded"
+                                            >
+                                                {levels.map(level => (
+                                                    <option key={level} value={level}>{level}</option>
+                                                ))}
+                                            </select> */}
+                                        </TableCell>
+                                        <TableCell>
+                                            {student.status}
+                                            {/* <select
+                                                value={student.status}
+                                                onChange={(e) => console.log(`Changed status for ${student._id}: ${e.target.value}`)}
+                                                className="w-full p-2 border rounded"
+                                            >
+                                                {statuses.map(status => (
+                                                    <option key={status} value={status}>{status}</option>
+                                                ))}
+                                            </select> */}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button variant="outline" onClick={() => handleAddClick(student._id)}>Add</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
+                </div>
+            )}
+            {/* Show message after student is added */}
+            {studentAdded && (
+                <p className="text-green-500">Student has been added successfully. You can now proceed to the fee collection.</p>
+            )}
+
+            {/* Show no students found message when search query doesn't match */}
+            {!studentAdded && searchQuery && filteredStudents.length === 0 && (
+                <p>No students found matching the search.</p>
+            )}
+
+            {/* Prompt to enter search query when search bar is empty */}
+            {!studentAdded && !searchQuery && (
+                <p>Please enter a search query to display students.</p>
+            )}
         </div>
-        {students.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-gray-200 shadow-lg">
-            <ScrollArea className="h-[500px]">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-blue-500 to-purple-500">
-                    <TableHead className="text-white font-bold">S_Code</TableHead>
-                    <TableHead className="text-white font-bold">Name</TableHead>
-                    <TableHead className="text-white font-bold">Class</TableHead>
-                    <TableHead className="text-white font-bold">Date of Birth</TableHead>
-                    <TableHead className="text-white font-bold">Contact Number</TableHead>
-                    <TableHead className="text-white font-bold">Course</TableHead>
-                    <TableHead className="text-white font-bold">Level</TableHead>
-                    <TableHead className="text-white font-bold">Status</TableHead>
-                    <TableHead className="text-white font-bold">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedStudents.map((student, index) => (
-                    <TableRow key={student._id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                      <TableCell className="font-medium">{student.student_code}</TableCell>
-                      <TableCell>{student.name}</TableCell>
-                      <TableCell>{student.student_class}</TableCell>
-                      <TableCell>{new Date(student.dob).toLocaleDateString()}</TableCell>
-                      <TableCell>{student.contact_number}</TableCell>
-                      <TableCell>{student.course}</TableCell>
-                      <TableCell>
-                        <select
-                          value={student?.level || ''}
-                          onChange={(e) => handleLevelChange(student._id, e.target.value)}
-                          className="w-full p-2 border rounded-md bg-white"
-                        >
-                          {levels.map(level => (
-                            <option key={level} value={level}>{level}</option>
-                          ))}
-                        </select>
-                      </TableCell>
-                      <TableCell>
-                        <select
-                          value={student?.status || ''}
-                          onChange={(e) => handleStatusChange(student._id, e.target.value)}
-                          className="w-full p-2 border rounded-md bg-white"
-                        >
-                          {statuses.map(status => (
-                            <option key={status} value={status}>{status}</option>
-                          ))}
-                        </select>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost"><ChevronDown className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => openModal(student._id)}>Edit</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </div>
-        ) : (
-          <p className="text-center text-gray-500 my-8">No students found</p>
-        )}
-        <div className="pagination mt-6 flex justify-between items-center">
-          <Button 
-            disabled={currentPage === 1} 
-            onClick={() => setCurrentPage(currentPage - 1)}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            Previous
-          </Button>
-          <span className="text-lg font-semibold">Page {currentPage} of {totalPages}</span>
-          <Button 
-            disabled={currentPage === totalPages} 
-            onClick={() => setCurrentPage(currentPage + 1)}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            Next
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
+    );
 }

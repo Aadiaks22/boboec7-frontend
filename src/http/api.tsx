@@ -14,6 +14,8 @@ interface CreateUserResponse {
 
 // Define the expected response structure for fetching a student
 interface FetchStudentResponse {
+    _id: string;
+    student_code: string;
     name: string;
     student_class: string;
     dob: string;
@@ -72,7 +74,7 @@ interface Student {
     course: string;
     level: string;
     status: string;
-  }
+}
 
 
 const api = axios.create({
@@ -109,7 +111,7 @@ export const createuser = async (data: {
 
 
 // Utility function to fetch student details
-export const fetchStudent = async (id: string): Promise<FetchStudentResponse | null> => {
+export const fetchStudent = async (id: string | null): Promise<FetchStudentResponse | null> => {
     if (!id) return null;
     const response = await api.get<FetchStudentResponse>(`/api/admin/user/${id}`);
     const data = response.data;
@@ -161,7 +163,7 @@ export const updateStudentData = async ({ id, updateData }: UpdateStudentDataPar
         console.error("No auth token found");
         throw new Error("Authorization token is missing");
     }
-    
+
     // Make PUT request with provided data
     const response = await api.put(`/api/admin/updateuser/${id}`, updateData, {
         headers: {
@@ -174,8 +176,42 @@ export const updateStudentData = async ({ id, updateData }: UpdateStudentDataPar
 };
 
 
-
 export const fetchStudents = async () => {
     const response = await api.get(`/api/admin/fetchalluser`);
     return response.data;
-  };
+};
+
+
+export const fetchReceiptNumber = async () => {
+    const response = await api.get(`${BASE_URL}/api/admin/receipt-number`);
+    return response.data;
+};
+
+// In your API module file, e.g., api.js or api.ts
+export const addReceipt = async ({ formData, authToken }: { formData: FormData, authToken: string }) => {
+    const response = await api.post(`${BASE_URL}/api/admin/addreciept`, {
+        headers: {
+            'auth-token': authToken,
+        },
+        body: formData,
+    });
+
+    return response.data;
+};
+
+// Function to save the receipt data
+export const saveReceipt = async (data: FormData) => {
+    const authToken = localStorage.getItem('token');
+    const response = await axios.post(`${BASE_URL}/api/admin/addreciept`, data, {
+        headers: { 'auth-token': authToken },
+    });
+    return response.data;
+};
+
+export const getReceipt = async () => {
+    const response = await api.get(`${BASE_URL}/api/admin/getreciept`);
+    if (!response.data) {
+        throw new Error("Receipt not found");
+    }
+    return response.data;
+};

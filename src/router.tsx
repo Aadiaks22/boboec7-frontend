@@ -1,12 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
 import LoginPage from "@/pages/LoginPage";
-import HomePage from "@/pages/HomePage";
-import RegisterPage from "@/pages/RegisterPage";
+import HomePage from "@/pages/KidsDictation";
+import RegisterPage from "@/pages/StudentRegistration";
 import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import FeeCollection from "@/pages/FeeCollection";
-import RegisterStudent from "@/pages/RegisteredStudent";
+import RegisterStudent from "@/pages/RegisterStudents";
 import FeeInvoice from "@/pages/FeeInvoice";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./protectedroute";

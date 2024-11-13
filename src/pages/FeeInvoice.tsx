@@ -26,6 +26,9 @@ export default function Component() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  //const queryClient = useQueryClient()
+
+
   useEffect(() => {
     const fetchReceiptData = async () => {
       try {
@@ -55,6 +58,24 @@ export default function Component() {
     fetchReceiptData()
   }, [])
 
+  // Use useQuery to fetch receipt data
+  // const { data, isError, isLoading } = useQuery<ReceiptData[]>({
+  //   queryKey: ['receiptData'],
+  //   queryFn: getReceipt,
+  //   refetchOnWindowFocus: false,
+  // });
+
+  // if (data) {
+  //   setReceiptData(Array.isArray(data) ? data : [data])
+  // } else {
+  //   throw new Error("Receipt not found")
+  // }
+
+  //if (isLoading) return <p>Loading receipt data...</p>;
+  //if (error) return <p className="text-red-500">Error</p>;
+
+
+
   const filteredData = receiptData.filter(
     (receipt) =>
       (receipt.reciept_number.toString().includes(searchTerm.toLowerCase()) ||
@@ -82,7 +103,7 @@ export default function Component() {
     return (
       <Card className="w-full max-w-4xl mx-auto mt-8 bg-red-50">
         <CardContent className="p-6">
-          <div className="text-center text-red-600">Error: {error}</div>
+          <div className="text-center text-red-600">Error</div>
         </CardContent>
       </Card>
     )
