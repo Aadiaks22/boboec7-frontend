@@ -207,7 +207,7 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
+    <Card className="w-full max-w-6xl mx-auto sm:mx-4">
       <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
         <CardTitle className="text-3xl font-bold flex items-center">
           <Users className="mr-2" />
@@ -216,8 +216,8 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
       </CardHeader>
       <CardContent className="p-6">
         {error && <p className="text-red-500 mb-4 p-2 bg-red-100 rounded">{error}</p>}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <div className="flex-1 min-w-[200px]">
+        <div className="mb-6 flex flex-col sm:flex-row flex-wrap items-center gap-4">
+          <div className="w-full sm:flex-1 sm:min-w-[200px]">
             <Input
               type="text"
               placeholder="Search by name"
@@ -229,34 +229,36 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded p-2 bg-white"
+            className="w-full sm:w-auto border rounded p-2 bg-white"
           >
             {statuses.map(status => (
               <option key={status} value={status}>{status}</option>
             ))}
           </select>
-          <Button onClick={() => setSearchQuery('')} variant="outline">Clear</Button>
-          <Button onClick={generatePDF} className="bg-red-500 hover:bg-red-600">
-            <FileText className="mr-2" />
-            PDF
-          </Button>
-          <Button onClick={generateExcel} className="bg-green-500 hover:bg-green-600">
-            <FileSpreadsheet className="mr-2" />
-            Excel
-          </Button>
+          <div className="flex w-full sm:w-auto gap-2">
+            <Button onClick={() => setSearchQuery('')} variant="outline" className="flex-1 sm:flex-none">Clear</Button>
+            <Button onClick={generatePDF} className="bg-red-500 hover:bg-red-600 flex-1 sm:flex-none">
+              <FileText className="mr-2" />
+              PDF
+            </Button>
+            <Button onClick={generateExcel} className="bg-green-500 hover:bg-green-600 flex-1 sm:flex-none">
+              <FileSpreadsheet className="mr-2" />
+              Excel
+            </Button>
+          </div>
         </div>
         {students.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-gray-200 shadow-lg">
+          <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-lg">
             <ScrollArea className="h-[500px]">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gradient-to-r from-blue-500 to-purple-500">
                     <TableHead className="text-white font-bold">S_Code</TableHead>
                     <TableHead className="text-white font-bold">Name</TableHead>
-                    <TableHead className="text-white font-bold">Class</TableHead>
-                    <TableHead className="text-white font-bold">Date of Birth</TableHead>
-                    <TableHead className="text-white font-bold">Contact Number</TableHead>
-                    <TableHead className="text-white font-bold">Course</TableHead>
+                    <TableHead className="text-white font-bold hidden sm:table-cell">Class</TableHead>
+                    <TableHead className="text-white font-bold hidden sm:table-cell">Date of Birth</TableHead>
+                    <TableHead className="text-white font-bold hidden sm:table-cell">Contact</TableHead>
+                    <TableHead className="text-white font-bold hidden sm:table-cell">Course</TableHead>
                     <TableHead className="text-white font-bold">Level</TableHead>
                     <TableHead className="text-white font-bold">Status</TableHead>
                     <TableHead className="text-white font-bold">Actions</TableHead>
@@ -267,10 +269,10 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
                     <TableRow key={student._id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <TableCell className="font-medium">{student.student_code}</TableCell>
                       <TableCell>{student.name}</TableCell>
-                      <TableCell>{student.student_class}</TableCell>
-                      <TableCell>{new Date(student.dob).toLocaleDateString()}</TableCell>
-                      <TableCell>{student.contact_number}</TableCell>
-                      <TableCell>{student.course}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{student.student_class}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{new Date(student.dob).toLocaleDateString()}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{student.contact_number}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{student.course}</TableCell>
                       <TableCell>
                         <select
                           value={student?.level || ''}
@@ -314,11 +316,11 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
         ) : (
           <p className="text-center text-gray-500 my-8">No students found</p>
         )}
-        <div className="pagination mt-6 flex justify-between items-center">
+        <div className="pagination mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
-            className="bg-blue-500 hover:bg-blue-600"
+            className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto"
           >
             Previous
           </Button>
@@ -326,7 +328,7 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
           <Button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
-            className="bg-blue-500 hover:bg-blue-600"
+            className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto"
           >
             Next
           </Button>
@@ -335,3 +337,4 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
     </Card>
   )
 }
+

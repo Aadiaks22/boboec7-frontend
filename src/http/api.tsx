@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+//import Cookies from 'js-cookie'
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Define the LoginResponse interface to specify the expected response structure
@@ -86,8 +86,13 @@ const api = axios.create({
 
 
 // Updated login function with type annotations and data return
-export const login = async (data: { contact_number: string; password: string }): Promise<LoginResponse> => {
+export const login = async (data: { contact_number: string; password: string , role: string}): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/api/auth/login', data);
+    // const options = {
+    //         expires: new Date(Date.now() + 3 * 60 * 60 * 1000),
+    //         httponly: true
+    //     };
+    //Cookies.set('token', response.data.authToken, {expires: 1}); // 1-day expiry
     return response.data;  // Return only the data to match LoginResponse type
 };
 
@@ -120,41 +125,6 @@ export const fetchStudent = async (id: string | null): Promise<FetchStudentRespo
     }
     return data;
 };
-
-
-
-// Mutation to update student details
-// export const updateStudent = async ({ id, credentials }: UpdateStudentParams) => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//         console.error("No auth token found");
-//         throw new Error("Authorization token is missing");
-//     }
-//     const response = await api.put(`/api/admin/updateuser/${id}`, credentials, {
-//         headers: {
-//             "Content-Type": "application/json",
-//             "auth-token": token,
-//         },
-//     });
-//     return response.data;
-// };
-
-
-// export const updateStudentone = async ({ id, updateData }: { id: string, updateData: Partial<Student> }) => {
-//     const token = localStorage.getItem('token');
-//     if (!token) {
-//         console.error("No auth token found");
-//         throw new Error("Authorization token is missing");
-//     }
-//     const response = await api.put(`/api/admin/updateuser/${id}`, updateData, {
-//         headers: {
-//             "Content-Type": "application/json",
-//             "auth-token": token,
-//         },
-//     });
-//     return response.data;
-//   };
-
 
 // Combined function for updating student details
 export const updateStudentData = async ({ id, updateData }: UpdateStudentDataParams) => {

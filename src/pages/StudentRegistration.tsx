@@ -14,7 +14,7 @@ import axios from "axios"
 
 const StudentRegistrationForm = () => {
   const navigate = useNavigate()
-  
+
   const [course, setCourse] = useState<string | undefined>(undefined)
 
   // References for inputs
@@ -67,11 +67,11 @@ const StudentRegistrationForm = () => {
     const email = emailRef.current?.value
     const address = addressRef.current?.value
     const city = cityRef.current?.value
-    
+
     if (!name || !student_class || !dob || !school_name || !mother_name || !father_name || !contact_number || !secondary_contact_number || !email || !address || !city || !course) {
       return alert("Please complete all fields")
     }
-    
+
     // Execute mutation
     mutation.mutate({
       name,
@@ -93,17 +93,17 @@ const StudentRegistrationForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-200 py-12 px-4 sm:px-6 lg:px-8 bg-[url('/placeholder.svg?height=600&width=800')] bg-cover bg-center bg-blend-overlay">
       <Card className="w-full max-w-4xl mx-auto mt-4 shadow-2xl bg-white/90 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-purple-700 flex items-center justify-center">
-            <GraduationCapIcon className="w-8 h-8 mr-2" />
+          <CardTitle className="text-2xl sm:text-3xl font-bold text-purple-700 flex items-center justify-center">
+            <GraduationCapIcon className="w-6 sm:w-8 h-6 sm:h-8 mr-2" />
             Student Registration
           </CardTitle>
-          <CardDescription className="text-lg text-gray-600">
+          <CardDescription className="text-sm sm:text-lg text-gray-600">
             Embark on a journey of knowledge and growth. Fill out the form below to register a new student.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-purple-700">Full Name</Label>
                 <Input ref={nameRef} id="name" name="name" placeholder="John Doe" required className="border-purple-300 focus:border-purple-500" />
@@ -151,7 +151,7 @@ const StudentRegistrationForm = () => {
               <Textarea ref={addressRef} id="address" name="address" placeholder="123 Main St, Apt 4B, New York, NY 10001" required className="border-purple-300 focus:border-purple-500" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="course" className="text-purple-700">Course</Label>
                 <Select onValueChange={(value) => setCourse(value)}>
@@ -166,8 +166,8 @@ const StudentRegistrationForm = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
-              <UserIcon className="w-5 h-5 mr-2" />
+            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-2 sm:py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
+              <UserIcon className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
               Register Student
             </Button>
           </form>
@@ -176,13 +176,14 @@ const StudentRegistrationForm = () => {
 
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-600">
-          By registering, you agree to our{" "}
+          By registering, you agree to our {" "}
           <a href="#" className="text-purple-600 hover:underline">Terms of Service</a>{" "}
-          and{" "}
+          and {" "}
           <a href="#" className="text-purple-600 hover:underline">Privacy Policy</a>.
         </p>
       </div>
     </div>
+
   )
 }
 

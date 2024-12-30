@@ -70,10 +70,16 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
             setStudents(data);
             setFilteredStudents(data);
         }
-        else{
-            setError('Error fetching student data');
-        }
+        
     }, [data]);
+
+    useEffect(() => {
+        if (error) {
+          setError('Error fetching student data');
+          console.error('Error fetching students:', error);
+        }
+      }, [error]);
+    
 
     useEffect(() => {
         if (searchQuery.trim() === '') {

@@ -4,6 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight, Search, Calendar, Eye, FileText } from "lucide-react"
+import { getReceipt } from "@/http/api"
+import { useMutation } from "@tanstack/react-query"
 
 interface ReceiptData {
   reciept_number: number
@@ -14,7 +16,7 @@ interface ReceiptData {
   reciept_img: string
 }
 
-const BASE_URL = import.meta.env.VITE_BASE_URL
+//const BASE_URL = import.meta.env.VITE_BASE_URL
 
 export default function Component() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -29,50 +31,61 @@ export default function Component() {
   //const queryClient = useQueryClient()
 
 
-  useEffect(() => {
-    const fetchReceiptData = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/getreciept`)
-        if (!response.ok) {
-          throw new Error("Failed to fetch receipt data")
-        }
+  // useEffect(() => {
+  //   const fetchReceiptData = async () => {
+  //     try {
+  //       const response = await axios.get(`${BASE_URL}/api/admin/getreciept`)
+  //       if (!response.data) {
+  //         throw new Error("Failed to fetch receipt data")
+  //       }
 
-        const data = await response.json()
+  //       const data = await response.data;
 
-        if (data) {
-          setReceiptData(Array.isArray(data) ? data : [data])
-        } else {
-          throw new Error("Receipt not found")
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message)
-        } else {
-          setError("An unknown error occurred")
-        }
-      } finally {
-        setLoading(false)
+  //       if (data) {
+  //         setReceiptData(Array.isArray(data) ? data : [data])
+  //       } else {
+  //         throw new Error("Receipt not found")
+  //       }
+  //     } catch (error) {
+  //       if (error instanceof Error) {
+  //         setError(error.message)
+  //       } else {
+  //         setError("An unknown error occurred")
+  //       }
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+
+  //   fetchReceiptData()
+  // }, [])
+
+
+  const mutation = useMutation({
+    mutationFn: getReceipt,
+    onSuccess: (data) => {
+      if (data) {
+        setReceiptData(Array.isArray(data) ? data : [data])
+        setLoading(false);
+      } else {
+        throw new Error("Receipt not found")
       }
-    }
+    },
+    onError: (error) => {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An unknown error occurred")
+      }
+    },
+  });
 
-    fetchReceiptData()
-  }, [])
+  // Use `useEffect` to call `mutation.mutate()` once when component mounts or based on a specific condition
+  useEffect(() => {
+    mutation.mutate(); // Call mutate only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures it runs once when the component mounts
 
-  // Use useQuery to fetch receipt data
-  // const { data, isError, isLoading } = useQuery<ReceiptData[]>({
-  //   queryKey: ['receiptData'],
-  //   queryFn: getReceipt,
-  //   refetchOnWindowFocus: false,
-  // });
-
-  // if (data) {
-  //   setReceiptData(Array.isArray(data) ? data : [data])
-  // } else {
-  //   throw new Error("Receipt not found")
-  // }
-
-  //if (isLoading) return <p>Loading receipt data...</p>;
-  //if (error) return <p className="text-red-500">Error</p>;
 
 
 

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import '../pages/FeeCollection.css';
+import Cookies from "js-cookie";
 
 
 const HomePage = () => {
@@ -36,6 +37,7 @@ const HomePage = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
+    Cookies.remove('token');
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     navigate("/auth/login");

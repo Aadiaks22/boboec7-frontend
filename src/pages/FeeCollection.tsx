@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import numberToWords from 'number-to-words';
 import { Button } from "@/components/ui/button";
-import { PrinterIcon, SaveIcon } from "lucide-react";
+import { PrinterIcon, SaveIcon } from 'lucide-react';
 import './FeeCollection.css';
 import './FeeCollectionSearch';
 import Demo3 from "./FeeCollectionSearch";
 import html2canvas from "html2canvas";
+import { useMutation } from "@tanstack/react-query";
+import { fetchReceiptNumber, fetchStudent, saveReceipt, updateStudentData } from "@/http/api";
 
 interface Student {
   _id: string;
@@ -68,8 +70,41 @@ const LevelDropdown: React.FC<LevelDropdownProps> = ({ level, onLevelChange }) =
   );
 };
 
+interface ModeDropdownProps {
+  mode: string;
+  onModeChange: (mode: string) => void;
+}
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const ModeDropdown: React.FC<ModeDropdownProps> = ({ mode, onModeChange }) => {
+  return (
+    <div className="flex text-right">
+      <Label className="mt-1 font-bold fs-1" htmlFor="mode">Mode:</Label>
+      <select
+        id="mode"
+        name="mode"
+        value={mode}
+        onChange={(e) => onModeChange(e.target.value)}
+        className="w-auto ml-2 border-none bg-transparent"
+        style={{
+          paddingTop: "0px",
+          paddingBottom: "0px",
+          height: "20px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          backgroundColor: "transparent",
+          border: "none",
+          fontSize: "inherit"
+        }}
+      >
+        <option value="cash">Cash</option>
+        <option value="online">Online</option>
+      </select>
+    </div>
+  );
+};
+
+
+//const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const FeeCollection = () => {
 
@@ -84,20 +119,37 @@ const FeeCollection = () => {
   };
 
   const [receiptNumber, setReceiptNumber] = useState<number | null>(null);
+  const [paymentMode, setPaymentMode] = useState<string>("cash");
+
+  const mutation = useMutation({
+    mutationFn: fetchReceiptNumber,
+    onSuccess: (data) => {
+      setReceiptNumber(data.receiptNumber);
+    },
+    onError: (error) => {
+      //setError('Error fetching student data');
+      console.error('Error fetching students:', error);
+    },
+  });
 
   useEffect(() => {
-    const fetchReceiptNumber = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/receipt-number`);
-        const data = await response.json();
-        setReceiptNumber(data.receiptNumber);
-      } catch (error) {
-        console.error('Error fetching receipt number:', error);
-      }
-    };
-
-    fetchReceiptNumber();
+    mutation.mutate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // useEffect(() => {
+  //   const fetchReceiptNumber = async () => {
+  //     try {
+  //       const response = await fetch(`${BASE_URL}/api/admin/receipt-number`);
+  //       const data = await response.json();
+  //       setReceiptNumber(data.receiptNumber);
+  //     } catch (error) {
+  //       console.error('Error fetching receipt number:', error);
+  //     }
+  //   };
+
+  //   fetchReceiptNumber();
+  // }, []);
 
   const { id: r_id } = useParams<{ id: string }>(); // Extract the student ID from the route
   const [student, setStudent] = useState<Student | null>(null); // State to store student details
@@ -148,29 +200,47 @@ const FeeCollection = () => {
   // Prioritize s_id if available, otherwise fall back to r_id
   const id = r_id || s_id;
 
+  const studentdata = useMutation({
+    mutationFn: fetchStudent,
+    onSuccess: (data) => {
+      if (data) {
+        setStudent(data);
+      } else {
+        throw new Error("Failed to fetch student details");
+      }
+    },
+    onError: (error) => {
+      console.error("Error fetching student:", error);
+    },
+  });
+
   useEffect(() => {
     // Set the current date in "DD/MM/YYYY" format
     const today = new Date();
     const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
     setCurrentDate(formattedDate);
 
-    const fetchStudent = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/admin/user/${id}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch student details");
-        }
-        const data = await response.json();
+    // const fetchStudent = async () => {
+    //   try {
+    //     const response = await fetch(`${BASE_URL}/api/admin/user/${id}`);
+    //     if (!response.ok) {
+    //       throw new Error("Failed to fetch student details");
+    //     }
+    //     const data = await response.json();
 
-        //console.log("Student Data:", data); // Log the student data to the console
+    //     //console.log("Student Data:", data); // Log the student data to the console
 
-        setStudent(data); // Set the fetched student details
-      } catch (error) {
-        console.error("Error fetching student:", error);
-      }
-    };
+    //     setStudent(data); // Set the fetched student details
+    //   } catch (error) {
+    //     console.error("Error fetching student:", error);
+    //   }
+    // };
 
-    fetchStudent();
+    // fetchStudent();
+
+    if(id)
+      studentdata.mutate(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // Calculate 9% tax for course fee and 6% tax for exercise book fee
@@ -212,6 +282,34 @@ const FeeCollection = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState<boolean>(false); // New state variable for save status
 
+  // Update student mutation
+  const updateMutation = useMutation({
+    mutationFn: updateStudentData,
+    onSuccess: () => {
+      console.log("Level Update Successful");
+      //setIsModalOpen(false);
+      //navigate(`/dashboard/register-student`);
+    },
+    onError: (error) => {
+      console.error("An error occurred:", error);
+    },
+  });
+
+  const addreciept = useMutation({
+    mutationFn: saveReceipt,
+    onSuccess: (data) => {
+      if (data) {
+        setIsSaved(true);
+        setSuccessMessage('Receipt saved successfully');
+      } else {
+        setErrorMessage('Error in saving receipt');
+      }
+    },
+    onError: (error) => {
+      throw new Error(error.message || 'Failed to save receipt');
+    },
+  });
+
   const handleSave = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
     setErrorMessage(null); // Reset any previous error message
@@ -244,9 +342,47 @@ const FeeCollection = () => {
       return;
     }
 
+    if (id) {
+      updateMutation.mutate({ id: id, updateData: student }); // Pass the right types
+    }
+
     if (invoiceElement) {
       try {
-        const canvas = await html2canvas(invoiceElement);
+        const canvas = await html2canvas(invoiceElement, {
+          scale: 4, // Increase scale for better quality
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: true,
+          windowWidth: invoiceElement.scrollWidth * 2,
+          windowHeight: invoiceElement.scrollHeight * 2,
+          onclone: (clonedDoc) => {
+            // Add specific styles to the cloned document
+            Array.from(clonedDoc.getElementsByClassName('invoice')).forEach((element) => {
+              (element as HTMLElement).style.fontFamily = 'Arial, sans-serif';
+              (element as HTMLElement).style.color = '#000000';
+              (element as HTMLElement).style.backgroundColor = '#ffffff';
+            });
+
+            // Ensure all input values and select options are visible
+            clonedDoc.querySelectorAll('input, select').forEach((el) => {
+              const span = clonedDoc.createElement('span');
+              span.textContent = (el as HTMLInputElement | HTMLSelectElement).value;
+              span.style.fontFamily = 'Arial, sans-serif';
+              span.style.color = '#000000';
+              el.parentNode?.replaceChild(span, el);
+            });
+
+            // Ensure level and mode are visible
+            clonedDoc.querySelectorAll('[for="level"], [for="mode"]').forEach((label) => {
+              const span = label.nextElementSibling as HTMLSpanElement;
+              if (span) {
+                span.style.fontFamily = 'Arial, sans-serif';
+                span.style.color = '#000000';
+                span.style.fontSize = '12px';
+              }
+            });
+          }
+        });
         const imageBlob = await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob as Blob), 'image/png'));
 
         // Create FormData to send the image as a file
@@ -257,32 +393,34 @@ const FeeCollection = () => {
         formData.append('paid_upto', student?.level || "");
         formData.append('net_amount', totalAmount.toString());
         formData.append('reciept_img', imageBlob, `receipt_${receiptNumber}.png`); // Append image as a file
-
+        formData.append('payment_mode', paymentMode);
 
         console.log("FormData being sent:", formData); // Log the request body
 
-        const response = await fetch(`${BASE_URL}/api/admin/addreciept`, {
-          method: 'POST',
-          headers: {
-            'auth-token': authToken, // Ensure you have the auth token here
-          },
-          body: formData,
-        });
+        addreciept.mutate(formData);
 
-        if (!response.ok) {
-          const errorResponse = await response.json();
-          throw new Error(errorResponse.message || 'Failed to save receipt');
-        }
+        // const response = await fetch(`${BASE_URL}/api/admin/addreciept`, {
+        //   method: 'POST',
+        //   headers: {
+        //     'auth-token': authToken, // Ensure you have the auth token here
+        //   },
+        //   body: formData,
+        // });
 
-        const json = await response.json();
+        // if (!response.ok) {
+        //   const errorResponse = await response.json();
+        //   throw new Error(errorResponse.message || 'Failed to save receipt');
+        // }
 
-        if (json.success) {
-          setIsSaved(true);
-          setSuccessMessage('Receipt saved successfully');
+        // const json = await response.json();
 
-        } else {
-          setErrorMessage('Error in saving receipt');
-        }
+        // if (json.success) {
+        //   setIsSaved(true);
+        //   setSuccessMessage('Receipt saved successfully');
+
+        // } else {
+        //   setErrorMessage('Error in saving receipt');
+        // }
       } catch (error) {
         if (error instanceof Error) {
           setErrorMessage(error.message);
@@ -295,9 +433,8 @@ const FeeCollection = () => {
     }
   };
 
-
   const renderReceipt = (copy: number) => (
-    <div className="invoice border border-black p-2 print:border-none print:p-1 print:text-[8pt] print:leading-tight">
+    <div className="invoice border border-black p-2 print:border-none print:p-1 print:text-[8pt] print:leading-tight bg-white text-black [&_*]:font-['Arial']">
       <div className="text-lg font-bold text-center mb-2 print:text-sm">
         OEC-7 ACADEMY ({copy === 1 ? 'Student' : 'Office'} Copy)
       </div>
@@ -309,7 +446,7 @@ const FeeCollection = () => {
         <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`studentCode${copy}`}>Student Code:</Label>
           <Input
-            className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
+            className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`studentCode${copy}`}
             name={`studentCode${copy}`}
             value={student?.student_code || ""}
@@ -319,7 +456,7 @@ const FeeCollection = () => {
         <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`receiptNumber${copy}`}>Receipt No.:</Label>
           <Input
-            className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
+            className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`receiptNumber${copy}`}
             name={`receiptNumber${copy}`}
             value={receiptNumber || ''}
@@ -329,7 +466,7 @@ const FeeCollection = () => {
         <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`studentName${copy}`}>Student Name:</Label>
           <Input
-            className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
+            className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`studentName${copy}`}
             name={`studentName${copy}`}
             value={student?.name || ""}
@@ -339,7 +476,7 @@ const FeeCollection = () => {
         <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`courseName${copy}`}>Course:</Label>
           <Input
-            className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
+            className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`courseName${copy}`}
             name={`courseName${copy}`}
             value={student?.course || ""}
@@ -355,7 +492,7 @@ const FeeCollection = () => {
         <div className="flex">
           <Label className="mt-1 font-bold" htmlFor={`date${copy}`}>Date:</Label>
           <Input
-            className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
+            className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`date${copy}`}
             name={`date${copy}`}
             value={currentDate}
@@ -377,74 +514,110 @@ const FeeCollection = () => {
               <td className="border border-black p-1 print:p-[2px]">Course Fee</td>
               <td className="text-center border border-black p-1 print:p-[2px]"></td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`courseFee${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={courseFee}
-                  onChange={(e) => setCourseFee(Number(e.target.value))}
-                  readOnly={copy === 2}
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {courseFee}
+                  </span>
+                ) : (
+                  <Input
+                    name={`courseFee${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={courseFee}
+                    onChange={(e) => setCourseFee(Number(e.target.value))}
+                    readOnly={copy === 2}
+                  />
+                )}
               </td>
             </tr>
             <tr>
               <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
               <td className="text-center border border-black p-1 print:p-[2px]">9%</td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`centralTax9${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={centralTax9.toFixed(2)}
-                  readOnly
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {centralTax9.toFixed(2)}
+                  </span>
+                ) : (
+                  <Input
+                    name={`centralTax9${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={centralTax9.toFixed(2)}
+                    readOnly
+                  />
+                )}
               </td>
             </tr>
             <tr>
               <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
               <td className="text-center border border-black p-1 print:p-[2px]">9%</td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`stateTax9${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={stateTax9.toFixed(2)}
-                  readOnly
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {stateTax9.toFixed(2)}
+                  </span>
+                ) : (
+                  <Input
+                    name={`stateTax9${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={stateTax9.toFixed(2)}
+                    readOnly
+                  />
+                )}
               </td>
             </tr>
             <tr>
               <td className="border border-black p-1 print:p-[2px]">Exercise Book</td>
               <td className="text-center border border-black p-1 print:p-[2px]"></td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`exerciseBookFee${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={exerciseBookFee}
-                  onChange={(e) => setExerciseBookFee(Number(e.target.value))}
-                  readOnly={copy === 2}
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {exerciseBookFee}
+                  </span>
+                ) : (
+                  <Input
+                    name={`exerciseBookFee${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={exerciseBookFee}
+                    onChange={(e) => setExerciseBookFee(Number(e.target.value))}
+                    readOnly={copy === 2}
+                  />
+                )}
               </td>
             </tr>
             <tr>
               <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
               <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`centralTax6${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={centralTax6.toFixed(2)}
-                  readOnly
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {centralTax6.toFixed(2)}
+                  </span>
+                ) : (
+                  <Input
+                    name={`centralTax6${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={centralTax6.toFixed(2)}
+                    readOnly
+                  />
+                )}
               </td>
             </tr>
             <tr>
               <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
               <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`stateTax6${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={stateTax6.toFixed(2)}
-                  readOnly
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {stateTax6.toFixed(2)}
+                  </span>
+                ) : (
+                  <Input
+                    name={`stateTax6${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={stateTax6.toFixed(2)}
+                    readOnly
+                  />
+                )}
               </td>
             </tr>
             {/* Checking if 'student' exists */}
@@ -545,74 +718,110 @@ const FeeCollection = () => {
                   <td className="border border-black p-1 print:p-[2px]">Kit Fee</td>
                   <td className="text-center border border-black p-1 print:p-[2px]"></td>
                   <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`kitFee${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={kitFee}
-                      onChange={(e) => setkitFee(Number(e.target.value))}
-                      readOnly={copy === 2}
-                    />
+                    {copy === 2 ? (
+                      <span className="w-full text-center block font-['Arial'] text-black">
+                        {kitFee}
+                      </span>
+                    ) : (
+                      <Input
+                        name={`kitFee${copy}`}
+                        className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                        value={kitFee}
+                        onChange={(e) => setkitFee(Number(e.target.value))}
+                        readOnly={copy === 2}
+                      />
+                    )}
                   </td>
                 </tr>
                 <tr>
                   <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
                   <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
                   <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`centralTax25${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={centralTax25.toFixed(2)}
-                      readOnly
-                    />
+                    {copy === 2 ? (
+                      <span className="w-full text-center block font-['Arial'] text-black">
+                        {centralTax25.toFixed(2)}
+                      </span>
+                    ) : (
+                      <Input
+                        name={`centralTax25${copy}`}
+                        className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                        value={centralTax25.toFixed(2)}
+                        readOnly
+                      />
+                    )}
                   </td>
                 </tr>
                 <tr>
                   <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
                   <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
                   <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`stateTax25${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={stateTax25.toFixed(2)}
-                      readOnly
-                    />
+                    {copy === 2 ? (
+                      <span className="w-full text-center block font-['Arial'] text-black">
+                        {stateTax25.toFixed(2)}
+                      </span>
+                    ) : (
+                      <Input
+                        name={`stateTax25${copy}`}
+                        className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                        value={stateTax25.toFixed(2)}
+                        readOnly
+                      />
+                    )}
                   </td>
                 </tr>
                 <tr>
                   <td className="border border-black p-1 print:p-[2px]">Jacket Fee</td>
                   <td className="text-center border border-black p-1 print:p-[2px]"></td>
                   <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`jacketFee${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={jacketFee}
-                      onChange={(e) => setjacketFee(Number(e.target.value))}
-                      readOnly={copy === 2}
-                    />
+                    {copy === 2 ? (
+                      <span className="w-full text-center block font-['Arial'] text-black">
+                        {jacketFee}
+                      </span>
+                    ) : (
+                      <Input
+                        name={`jacketFee${copy}`}
+                        className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                        value={jacketFee}
+                        onChange={(e) => setjacketFee(Number(e.target.value))}
+                        readOnly={copy === 2}
+                      />
+                    )}
                   </td>
                 </tr>
                 <tr>
                   <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
                   <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                   <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`centralTax06${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={centralTax06.toFixed(2)}
-                      readOnly
-                    />
+                    {copy === 2 ? (
+                      <span className="w-full text-center block font-['Arial'] text-black">
+                        {centralTax06.toFixed(2)}
+                      </span>
+                    ) : (
+                      <Input
+                        name={`centralTax06${copy}`}
+                        className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                        value={centralTax06.toFixed(2)}
+                        readOnly
+                      />
+                    )}
                   </td>
                 </tr>
                 <tr>
                   <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
                   <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                   <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`stateTax06${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={stateTax06.toFixed(2)}
-                      readOnly
-                    />
+                    {copy === 2 ? (
+                      <span className="w-full text-center block font-['Arial'] text-black">
+                        {stateTax06.toFixed(2)}
+                      </span>
+                    ) : (
+                      <Input
+                        name={`stateTax06${copy}`}
+                        className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                        value={stateTax06.toFixed(2)}
+                        readOnly
+                      />
+                    )}
                   </td>
                 </tr></>
             )}
@@ -631,43 +840,53 @@ const FeeCollection = () => {
             <tr>
               <td className="text-center border border-black p-1 print:p-[2px]">Course Fee</td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`courseFee${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={mcourseFee}
-                  onChange={(e) => setMCourseFee(Number(e.target.value))}
-                  readOnly={copy === 2}
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {mcourseFee}
+                  </span>
+                ) : (
+                  <Input
+                    name={`courseFee${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={mcourseFee}
+                    onChange={(e) => setMCourseFee(Number(e.target.value))}
+                    readOnly={copy === 2}
+                  />
+                )}
               </td>
             </tr>
             <tr>
               <td className="text-center border border-black p-1 print:p-[2px]">Kit Fee</td>
               <td className="border border-black p-1 print:p-[2px]">
-                <Input
-                  name={`kitFee${copy}`}
-                  className="w-full text-center border-none bg-transparent p-0 h-auto"
-                  value={mkitFee}
-                  onChange={(e) => setMKitFee(Number(e.target.value))}
-                  readOnly={copy === 2}
-                />
+                {copy === 2 ? (
+                  <span className="w-full text-center block font-['Arial'] text-black">
+                    {mkitFee}
+                  </span>
+                ) : (
+                  <Input
+                    name={`kitFee${copy}`}
+                    className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
+                    value={mkitFee}
+                    onChange={(e) => setMKitFee(Number(e.target.value))}
+                    readOnly={copy === 2}
+                  />
+                )}
               </td>
             </tr>
           </tbody>
         </table>)}
 
-
       <div className="grid grid-cols-2 gap-2 mb-2 text-xs print:text-[7pt]">
         <div className="flex">
-          <Label className="mt-1 font-bold" htmlFor={`paymentMode${copy}`}>Mode:</Label>
-          <select className="w-auto ml-1 border-none bg-transparent" id={`paymentMode${copy}`} name={`paymentMode${copy}`}>
-            <option value="cash">Cash</option>
-            <option value="online">Online</option>
-          </select>
+          <ModeDropdown
+            mode={paymentMode}
+            onModeChange={setPaymentMode}
+          />
         </div>
         <div className="flex text-center">
           <Label className="mt-1 font-bold" htmlFor={`totalAmount${copy}`}>Total:</Label>
           <Input
-            className="w-auto ml-1 border-none bg-transparent p-0 h-auto"
+            className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`totalAmount${copy}`}
             name={`totalAmount${copy}`}
             value={totalAmount.toFixed(2)}
@@ -678,7 +897,7 @@ const FeeCollection = () => {
         <div className="flex justify-end">
           <Label className="font-bold" htmlFor={`amountInWords${copy}`}>Amount in Words:</Label>
           <textarea
-            className="w-full ml-1 border-none bg-transparent p-0 h-auto text-xs print:text-[7pt]"
+            className="w-full ml-1 border-none bg-transparent p-0 h-auto text-xs print:text-[7pt] font-sans text-black [&]:font-sans"
             id={`amountInWords${copy}`}
             name={`amountInWords${copy}`}
             value={totalAmountInWords}

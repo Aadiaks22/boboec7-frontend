@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { useMutation } from '@tanstack/react-query';
+import { fetchStudents } from '@/http/api';
 
 interface Student {
     _id: string;
@@ -23,12 +25,7 @@ interface Student {
     status: string;
 }
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 const ITEMS_PER_PAGE = 10;
-//const levels = Array.from({ length: 10 }, (_, i) => (i + 1).toString());
-//const statuses = ["Active", "Inactive", "Pending", "Dropped", "Graduate"];
-
-
 
 export default function StudentManagement({ onAddStudent }: { onAddStudent: (studentId: string) => void }) {
     const [students, setStudents] = useState<Student[]>([]);
@@ -38,28 +35,30 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
     const [searchQuery, setSearchQuery] = useState('');
     const [studentAdded, setStudentAdded] = useState(false); // Track if a student is added
 
-    useEffect(() => {
-        const fetchStudents = async () => {
-            try {
-                const response = await fetch(`${BASE_URL}/api/admin/fetchalluser`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch students');
-                }
-                const data = await response.json();
-                setStudents(data);
-                setFilteredStudents(data); // Initialize with all students
-            } catch (error) {
-                setError('Error fetching student data');
-                console.error('Error fetching students:', error);
-            }
-        };
+    const mutation = useMutation({
+        mutationFn: fetchStudents,
+        onSuccess: (data) => {
+            setStudents(data);
+            setFilteredStudents(data); // Initialize with all students
+        },
+        onError: (error) => {
+            setError('Error fetching student data');
+            console.error('Error fetching students:', error);
+        },
+    });
 
-        fetchStudents();
-    }, []);
-
+    // Trigger the mutation only once when the component mounts
     useEffect(() => {
+        mutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty dependency array to ensure the mutation only runs once on mount
+
+    // Update filtered students when searchQuery or students change
+    useEffect(() => {
+        if (!students.length) return; // Don't filter until data is fetched
+
         if (searchQuery.trim() === '') {
-            setFilteredStudents([]); // Clear filtered students if no search query
+            setFilteredStudents(students); // Reset to all students when the search query is cleared
         } else {
             const lowercasedQuery = searchQuery.toLowerCase();
             const filtered = students.filter(student =>
@@ -67,13 +66,8 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
             );
             setFilteredStudents(filtered);
         }
+
         setCurrentPage(1); // Reset pagination to page 1
-
-        // Reset the studentAdded state when the search query changes
-        if (searchQuery.trim() !== '') {
-            setStudentAdded(false); // Allow table to be visible on new search
-        }
-
     }, [searchQuery, students]);
 
     // Calculate paginated students
@@ -83,10 +77,12 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
 
     // Handle "Add" button click
     const handleAddClick = (studentId: string) => {
-        // Send the student ID to the fee collection page via the onAddStudent function
-        onAddStudent(studentId);
-        setSearchQuery(''); // Clear search query
-        setStudentAdded(true); // Set studentAdded to true to hide the table
+        // Ensure studentId is valid before calling onAddStudent
+        if (studentId) {
+            onAddStudent(studentId);
+            setSearchQuery(''); // Clear search query
+            setStudentAdded(true); // Set studentAdded to true to hide the table
+        }
     };
 
     return (
@@ -130,30 +126,8 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
                                         <TableCell>{new Date(student.dob).toLocaleDateString()}</TableCell>
                                         <TableCell>{student.contact_number}</TableCell>
                                         <TableCell>{student.course}</TableCell>
-                                        <TableCell>
-                                            {student.level}
-                                            {/* <select
-                                                value={student.level}
-                                                onChange={(e) => console.log(`Changed level for ${student._id}: ${e.target.value}`)}
-                                                className="w-full p-2 border rounded"
-                                            >
-                                                {levels.map(level => (
-                                                    <option key={level} value={level}>{level}</option>
-                                                ))}
-                                            </select> */}
-                                        </TableCell>
-                                        <TableCell>
-                                            {student.status}
-                                            {/* <select
-                                                value={student.status}
-                                                onChange={(e) => console.log(`Changed status for ${student._id}: ${e.target.value}`)}
-                                                className="w-full p-2 border rounded"
-                                            >
-                                                {statuses.map(status => (
-                                                    <option key={status} value={status}>{status}</option>
-                                                ))}
-                                            </select> */}
-                                        </TableCell>
+                                        <TableCell>{student.level}</TableCell>
+                                        <TableCell>{student.status}</TableCell>
                                         <TableCell>
                                             <Button variant="outline" onClick={() => handleAddClick(student._id)}>Add</Button>
                                         </TableCell>
