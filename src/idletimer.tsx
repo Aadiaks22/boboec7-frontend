@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 interface IdleTimerProps {
   timeout: number; // Timeout in milliseconds
@@ -41,11 +42,12 @@ export default function IdleTimer({ timeout }: IdleTimerProps) {
 
   useEffect(() => {
     if (isIdle) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
+      Cookies.remove('token');
+      Cookies.remove('username');
       navigate('/auth/login', { replace: true });
     }
   }, [isIdle, navigate]);
 
   return null;
 }
+

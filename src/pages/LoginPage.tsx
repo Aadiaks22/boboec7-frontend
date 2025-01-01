@@ -1,18 +1,17 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMutation } from "@tanstack/react-query";
 import { login } from "@/http/api";
-import { LoaderCircle } from "lucide-react";
-//import Cookies from 'js-cookie';
+import { LoaderCircle } from 'lucide-react';
+import Cookies from 'js-cookie';
 
 const LoginPage = () => {
-  //const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  //const location = useLocation();
+  const location = useLocation();
 
   const phoneRef = useRef<HTMLInputElement>(null);
   const dobYearRef = useRef<HTMLInputElement>(null);
@@ -22,16 +21,15 @@ const LoginPage = () => {
   const [iserror, setIserror] = useState('')
 
   // Get the `from` path (default to home page if not available)
-  //const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || '/dashboard';
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   //const token = Cookies.get('token');
-  //   if (token) {
-  //     // Redirect to the page they were on before accessing login
-  //     navigate(from, { replace: true });
-  //   }
-  // }, [navigate, from]);
+  useEffect(() => {
+    const token = Cookies.get('token');
+    if (token) {
+      // Redirect to the page they were on before accessing login
+      navigate(from, { replace: true });
+    }
+  }, [navigate, from]);
 
   const handleFormSwitch = (form: "admin" | "user") => {
     setActiveForm(form)
@@ -43,39 +41,34 @@ const LoginPage = () => {
     onSuccess: (data) => {
       if (data) {
         console.log("Login successful", data);
-        // const options = {
-        //     expires: new Date(Date.now() + 3 * 60 * 60 * 1000),
-        //     httponly: true
-        // };
-        // const cookie = Cookies.set('token', data.authToken, options); // 1-day expiry
-        // if(cookie)
-        // {
-        //   console.log('cookie is set', cookie);
-        // }
-        localStorage.setItem("token", data.authToken);
-        localStorage.setItem("username", data.username);
-        navigate("/dashboard"); // Uncomment if you want navigation
+        const options = {
+          expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
+          secure: true, // Use secure cookies in production
+          sameSite: 'strict' as const
+        };
+        Cookies.set('token', data.authToken, options);
+        Cookies.set('username', data.username, options);
+        navigate("/dashboard");
       }
     },
     onError: (error) => {
       setIsLoading(false);
-      console.log(error);
       console.error("Login failed:", error.message);
       setIserror(error.message);
     },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Prevent form from reloading the page
-
+    e.preventDefault();
     setIsLoading(true);
     const contact_number = phoneRef.current?.value;
     const password = dobYearRef.current?.value;
-    //console.log(activeForm);
     const role = activeForm;
 
     if (!contact_number || !password || !role) {
-      return alert("Please enter Contact Number and Year of Birth");
+      setIsLoading(false);
+      setIserror("Please enter Contact Number and Year of Birth");
+      return;
     }
     mutation.mutate({ contact_number, password, role });
   };
@@ -210,3 +203,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

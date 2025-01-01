@@ -38,8 +38,9 @@ const HomePage = () => {
 
   const handleLogout = () => {
     Cookies.remove('token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
+    Cookies.remove('username');
+    // localStorage.removeItem('token');
+    // localStorage.removeItem('username');
     navigate("/auth/login");
   }
 
