@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { useMutation } from '@tanstack/react-query';
 import { fetchStudents } from '@/http/api';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface Student {
     _id: string;
@@ -57,6 +59,8 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
     useEffect(() => {
         if (!students.length) return; // Don't filter until data is fetched
 
+        setStudentAdded(false); // Reset studentAdded when search query changes
+
         if (searchQuery.trim() === '') {
             setFilteredStudents(students); // Reset to all students when the search query is cleared
         } else {
@@ -87,7 +91,11 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
 
     return (
         <div className="main-content p-4">
-            {error && <p className="text-red-500 mb-4">{error}</p>}
+            {error && <Alert variant="destructive" className="mb-4">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>}
 
             <div className="mb-4 flex items-center">
                 <Input
@@ -141,7 +149,11 @@ export default function StudentManagement({ onAddStudent }: { onAddStudent: (stu
             )}
             {/* Show message after student is added */}
             {studentAdded && (
-                <p className="text-green-500">Student has been added successfully. You can now proceed to the fee collection.</p>
+                <Alert variant="default" className="mb-4 bg-green-100 text-green-800 border-green-300">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>Student has been added successfully. You can now proceed to the fee collection.</AlertDescription>
+              </Alert>
             )}
 
             {/* Show no students found message when search query doesn't match */}

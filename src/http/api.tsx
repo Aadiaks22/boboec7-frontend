@@ -1,12 +1,14 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { LoginResponse, LoginError } from '../types/api';
+
 //import Cookies from 'js-cookie'
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Define the LoginResponse interface to specify the expected response structure
-interface LoginResponse {
-    authToken: string;
-    username: string;
-}
+// interface LoginResponse {
+//     authToken: string;
+//     username: string;
+// }
 
 interface CreateUserResponse {
     authToken: string;
@@ -86,15 +88,29 @@ const api = axios.create({
 
 
 // Updated login function with type annotations and data return
-export const login = async (data: { contact_number: string; password: string , role: string}): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>('/api/auth/login', data);
-    // const options = {
-    //         expires: new Date(Date.now() + 3 * 60 * 60 * 1000),
-    //         httponly: true
-    //     };
-    //Cookies.set('token', response.data.authToken, {expires: 1}); // 1-day expiry
-    return response.data;  // Return only the data to match LoginResponse type
-};
+interface LoginCredentials {
+    contact_number: string;
+    password: string;
+    role: string;
+  }
+  
+  export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+    try {
+      const response = await axios.post<LoginResponse>('/api/auth/login', credentials);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<LoginError>;
+        if (axiosError.response) {
+          const errorData = axiosError.response.data;
+          throw new Error(errorData.error || 'An error occurred during login.');
+        }
+      }
+      throw new Error('An unexpected error occurred. Please try again later.');
+    }
+  };
+  
+  
 
 export const createuser = async (data: {
     name: string

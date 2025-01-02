@@ -8,6 +8,9 @@ import { useMutation } from "@tanstack/react-query";
 import { login } from "@/http/api";
 import { LoaderCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2, XCircle } from 'lucide-react';
+import { LoginResponse } from "@/types/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,60 +19,66 @@ const LoginPage = () => {
   const phoneRef = useRef<HTMLInputElement>(null);
   const dobYearRef = useRef<HTMLInputElement>(null);
 
-  const [activeForm, setActiveForm] = useState<"admin" | "user">("user")
-  const [isLoading, setIsLoading] = useState(false)
-  const [iserror, setIserror] = useState('')
+  const [activeForm, setActiveForm] = useState<"admin" | "user">("user");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Get the `from` path (default to home page if not available)
   const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     const token = Cookies.get('token');
     if (token) {
-      // Redirect to the page they were on before accessing login
       navigate(from, { replace: true });
     }
   }, [navigate, from]);
 
   const handleFormSwitch = (form: "admin" | "user") => {
-    setActiveForm(form)
-  }
+    setActiveForm(form);
+    setError(null);
+    setSuccess(null);
+  };
 
-  // Mutations
-  const mutation = useMutation({
+  const mutation = useMutation<LoginResponse, Error, { contact_number: string; password: string; role: string }>({
     mutationFn: login,
     onSuccess: (data) => {
-      if (data) {
-        console.log("Login successful", data);
-        const options = {
-          expires: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours
-          secure: true, // Use secure cookies in production
-          sameSite: 'strict' as const
-        };
-        Cookies.set('token', data.authToken, options);
-        Cookies.set('username', data.username, options);
-        navigate("/dashboard");
-      }
+      setSuccess("Login successful. Redirecting...");
+      const options = {
+        expires: new Date(Date.now() + 3 * 60 * 60 * 1000),
+        secure: true,
+        sameSite: 'strict' as const
+      };
+      Cookies.set('token', data.authToken, options);
+      // Cookies.set('username', data.username, options);
+      // Cookies.set('role', data.role, options);
+      
+      // Use navigate directly instead of setTimeout
+      navigate("/dashboard", { replace: true });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      setError(error.message || "An unexpected error occurred. Please try again.");
+    },
+    onSettled: () => {
       setIsLoading(false);
-      console.error("Login failed:", error.message);
-      setIserror(error.message);
     },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
     const contact_number = phoneRef.current?.value;
     const password = dobYearRef.current?.value;
     const role = activeForm;
 
-    if (!contact_number || !password || !role) {
+    if (!contact_number || !password) {
+      setError("Please enter both Contact Number and Year of Birth.");
       setIsLoading(false);
-      setIserror("Please enter Contact Number and Year of Birth");
       return;
     }
+
     mutation.mutate({ contact_number, password, role });
   };
 
@@ -118,82 +127,58 @@ const LoginPage = () => {
                   Kid's Practice Portal
                 </Button>
               </div>
-              <div>{iserror && <div className="error-message text-red-500">{iserror}</div>}</div>
-              {activeForm === "admin" ? (
-                <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto lg:mx-0">
-                  <div className="space-y-2">
-                    <Label htmlFor="adminPhone" className="text-orange-700">
-                      UserName
-                    </Label>
-                    <Input
-                      ref={phoneRef}
-                      id="phone"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      required
-                      className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminDobYear" className="text-orange-700">
-                      Password
-                    </Label>
-                    <Input
-                      ref={dobYearRef}
-                      id="dobYear"
-                      type="password"
-                      placeholder="Enter your year of birth"
-                      required
-                      className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
-                    disabled={isLoading}
-                  >
-                    {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                    <span>Login as Administrator</span>
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto lg:mx-0">
-                  <div className="space-y-2">
-                    <Label htmlFor="studentPhone" className="text-orange-700">
-                      Mobile Number
-                    </Label>
-                    <Input
-                      ref={phoneRef}
-                      id="phone"
-                      type="tel"
-                      placeholder="Enter your mobile number"
-                      required
-                      className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="studentDobYear" className="text-orange-700">
-                      Year of Birth
-                    </Label>
-                    <Input
-                      ref={dobYearRef}
-                      id="dobYear"
-                      type="password"
-                      placeholder="Enter your year of birth"
-                      required
-                      className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
-                    disabled={isLoading}
-                  >
-                    {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                    <span>Login to Kid's Practice Portal</span>
-                  </Button>
-                </form>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
+              {success && (
+                <Alert variant="default" className="mb-4 bg-green-100 text-green-800 border-green-300">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertTitle>Success</AlertTitle>
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto lg:mx-0">
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-orange-700">
+                    {activeForm === "admin" ? "Username" : "Mobile Number"}
+                  </Label>
+                  <Input
+                    ref={phoneRef}
+                    id="phone"
+                    type="tel"
+                    placeholder={`Enter your ${activeForm === "admin" ? "username" : "mobile number"}`}
+                    required
+                    className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dobYear" className="text-orange-700">
+                    {activeForm === "admin" ? "Password" : "Year of Birth"}
+                  </Label>
+                  <Input
+                    ref={dobYearRef}
+                    id="dobYear"
+                    type="password"
+                    placeholder={`Enter your ${activeForm === "admin" ? "password" : "year of birth"}`}
+                    required
+                    className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  disabled={isLoading}
+                >
+                  {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                  <span>
+                    {activeForm === "admin" ? "Login as Administrator" : "Login to Kid's Practice Portal"}
+                  </span>
+                </Button>
+              </form>
             </div>
           </div>
         </CardContent>

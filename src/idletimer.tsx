@@ -43,7 +43,7 @@ export default function IdleTimer({ timeout }: IdleTimerProps) {
   useEffect(() => {
     if (isIdle) {
       Cookies.remove('token');
-      Cookies.remove('username');
+      //Cookies.remove('username');
       navigate('/auth/login', { replace: true });
     }
   }, [isIdle, navigate]);

@@ -173,15 +173,6 @@ const StudentRegistrationForm = () => {
           </form>
         </CardContent>
       </Card>
-
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-600">
-          By registering, you agree to our {" "}
-          <a href="#" className="text-purple-600 hover:underline">Terms of Service</a>{" "}
-          and {" "}
-          <a href="#" className="text-purple-600 hover:underline">Privacy Policy</a>.
-        </p>
-      </div>
     </div>
 
   )

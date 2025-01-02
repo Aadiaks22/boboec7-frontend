@@ -6,7 +6,7 @@ export default function Dashboard() {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500 flex items-center justify-center">
       <Card className="w-full max-w-4xl bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden border-2 border-orange-200">
         <CardContent className="p-6 sm:p-10">
           <div className="flex flex-col sm:flex-row items-center gap-8">

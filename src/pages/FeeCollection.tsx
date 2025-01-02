@@ -11,6 +11,8 @@ import Demo3 from "./FeeCollectionSearch";
 import html2canvas from "html2canvas";
 import { useMutation } from "@tanstack/react-query";
 import { fetchReceiptNumber, fetchStudent, saveReceipt, updateStudentData } from "@/http/api";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface Student {
   _id: string;
@@ -923,10 +925,24 @@ const FeeCollection = () => {
             <Demo3 onAddStudent={handleAddStudent} />
           </div>)}
 
-        <div>
+        {/* <div>
           {errorMessage && <div className="error-message text-red-500">{errorMessage}</div>}
           {successMessage && <div className="success-message text-green-500 print:hidden ml-4">{successMessage}</div>}
-        </div>
+        </div> */}
+        {errorMessage && (
+                <Alert variant="destructive" className="mb-4">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+              {successMessage && (
+                <Alert variant="default" className="mb-4 bg-green-100 text-green-800 border-green-300">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertTitle>Success</AlertTitle>
+                  <AlertDescription>{successMessage}</AlertDescription>
+                </Alert>
+              )}
         <div className="flex justify-between items-center">
           <div className="flex">
           </div>
