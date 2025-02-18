@@ -3,128 +3,81 @@
 import { useState, useEffect, useRef } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Input } from '@/components/ui/input'
 
-const sumsOptions = Array.from({ length: 6 }, (_, i) => (i + 1).toString())
+const sumsOptions = ['1', '2']
 const rowsOptions = Array.from({ length: 100 }, (_, i) => (i + 3).toString())
 const timesOptions = Array.from({ length: 120 }, (_, i) => (i + 1).toString())
+const typeOptions = ['SD', 'SD/DD', 'D3', 'D4']
 
 export default function DictationComponent() {
-  const [activity, setActivity] = useState('Dictation')
   const [sums, setSums] = useState('1')
   const [type, setType] = useState('SD')
   const [rows, setRows] = useState('3')
   const [time, setTime] = useState('3')
-  const [currentNumber, setCurrentNumber] = useState<number | null>(null)
-  const [answer, setAnswer] = useState('')
-  const [openDictation, setOpenDictation] = useState(false)
+  const [currentNumbers, setCurrentNumbers] = useState<(number | null)[]>([null, null])
   const [dictationActive, setDictationActive] = useState(false)
-  const [correctAnswer, setCorrectAnswer] = useState<string[]>([])
-  const [timeLeft, setTimeLeft] = useState(parseInt(time))
   const [dictationEnded, setDictationEnded] = useState(false)
-  const newNumbersRef = useRef<number[]>([])
+  const [showAnswer, setShowAnswer] = useState(false)
+  const [accumulatedNumbers, setAccumulatedNumbers] = useState<string[]>(['', ''])
+
+  const numbersRef = useRef<number[][]>([[], []])
   const currentIndexRef = useRef(0)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const startDictation = () => {
-    const rowNumber = parseInt(rows, 10)
-    const generatedNumbers = generateRandomNumber(type, rowNumber)
-    newNumbersRef.current = generatedNumbers
-    setCurrentNumber(generatedNumbers[0])
+    const rowCount = parseInt(rows, 10)
+    numbersRef.current = [generateRandomNumbers(type, rowCount), generateRandomNumbers(type, rowCount)]
     setDictationActive(true)
     setDictationEnded(false)
-    setCorrectAnswer([])
-    setAnswer('')
-    setTimeLeft(parseInt(time))
+    setShowAnswer(false)
+    setAccumulatedNumbers(['', ''])
     currentIndexRef.current = 0
+    displayNextNumber()
   }
 
-  const openDictationDiv = () => {
-    setOpenDictation(true)
-    setCurrentNumber(null)
-    setAnswer('')
-    setDictationActive(false)
-    setCorrectAnswer([])
-    setTimeLeft(parseInt(time))
-    setDictationEnded(false)
-  }
+  const displayNextNumber = () => {
+    const rowCount = parseInt(rows, 10)
+    const timePerNumber = Math.max(100, (parseInt(time, 10) * 1000) / rowCount)
 
-  useEffect(() => {
-    if (dictationActive && timeLeft > 0) {
-      const rowNumber = parseInt(rows, 10)
-      const totalTime = parseInt(time)
-      const timePerNumber = (totalTime / rowNumber)
+    if (currentIndexRef.current < numbersRef.current[0].length) {
+      const newNumbers = numbersRef.current.map(arr => arr[currentIndexRef.current])
+      setCurrentNumbers([newNumbers[0], sums === '2' ? newNumbers[1] : null])
 
-      const intervalId = setInterval(() => {
-        if (currentIndexRef.current < newNumbersRef.current.length) {
-          const nextNumber = newNumbersRef.current[currentIndexRef.current]
-          setCurrentNumber(nextNumber)
-          setCorrectAnswer(prev => [...prev, nextNumber.toString()])
-          currentIndexRef.current++
-        } else {
-          clearInterval(intervalId)
-          setDictationEnded(true)
-          setDictationActive(false)
-        }
+      setAccumulatedNumbers(prev => prev.map((acc, i) => acc ? `${acc}, ${newNumbers[i]}` : `${newNumbers[i]}`))
 
-        setTimeLeft(prev => prev - timePerNumber)
-      }, timePerNumber * 1000)
-
-      return () => clearInterval(intervalId)
-    }
-
-    if (timeLeft === 0 && dictationActive) {
+      currentIndexRef.current++
+      timeoutRef.current = setTimeout(displayNextNumber, timePerNumber)
+    } else {
+      setDictationActive(false)
       setDictationEnded(true)
     }
-  }, [dictationActive, timeLeft, type, rows, time])
+  }
 
-  const generateRandomNumber = (type: string, rows: number) => {
+  const generateRandomNumbers = (type: string, count: number): number[] => {
     const numbers: number[] = []
-    for (let i = 0; i < rows; i++) {
-      let number = 0
-      if (type === 'SD') {
-        number = Math.floor(Math.random() * 10)
-      } else if (type === 'SD/DD') {
-        number = Math.random() < 0.5
-          ? Math.floor(Math.random() * 10)
-          : Math.floor(Math.random() * 90 + 10)
-      } else if (type === 'D3') {
-        number = Math.floor(Math.random() * 900 + 100)
-      } else if (type === 'D4') {
-        number = Math.floor(Math.random() * 9000 + 1000)
-      } else if (type === 'D5') {
-        number = Math.floor(Math.random() * 90000 + 10000)
-      } else if (type === 'D6') {
-        number = Math.floor(Math.random() * 900000 + 100000)
-      } else if (type === 'D7') {
-        number = Math.floor(Math.random() * 9000000 + 1000000)
-      } else if (type === 'D8') {
-        number = Math.floor(Math.random() * 90000000 + 10000000)
-      }
-
-      if (type.includes('SD/DD') || type.includes('D')) {
-        if (Math.random() < 0.5) {
-          number = -number
-        }
-      }
-
+    let sum = 0
+    
+    for (let i = 0; i < count; i++) {
+      let number = Math.floor(Math.random() * 9) + 1
+      if (type === 'SD/DD') number = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 90) + 10
+      else if (type === 'D3') number = Math.floor(Math.random() * 900) + 100
+      else if (type === 'D4') number = Math.floor(Math.random() * 9000) + 1000
+      
+      if (Math.random() < 0.5) number = -number
+      while (sum + number < 0) number = Math.abs(number)
+      
       numbers.push(number)
+      sum += number
     }
     return numbers
   }
 
-  const handleShowAnswer = () => {
-    const sum = correctAnswer.reduce((acc, curr) => acc + parseInt(curr, 10), 0)
-    setAnswer(sum.toString())
-  }
-
-  const handleReload = () => {
-    setCurrentNumber(null)
-    setAnswer('')
-    setDictationActive(false)
-    setCorrectAnswer([])
-    setTimeLeft(parseInt(time))
-    setDictationEnded(false)
-  }
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -132,115 +85,41 @@ export default function DictationComponent() {
         <div className="p-4 bg-purple-600 text-white">
           <h1 className="text-2xl font-bold">Kid's Dictation Activity</h1>
         </div>
+
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label htmlFor="activity" className="block text-sm font-medium text-gray-700">Activity:</label>
-              <Select value={activity} onValueChange={setActivity}>
-                <SelectTrigger id="activity" className="w-full">
-                  <SelectValue placeholder="Select activity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Dictation">Dictation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label htmlFor="sums" className="block text-sm font-medium text-gray-700">Sum(s):</label>
-              <Select value={sums} onValueChange={setSums}>
-                <SelectTrigger id="sums" className="w-full">
-                  <SelectValue placeholder="Select sums" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sumsOptions.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700">Type:</label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger id="type" className="w-full">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SD">SD</SelectItem>
-                  <SelectItem value="SD/DD">SD/DD</SelectItem>
-                  <SelectItem value="D3">D3</SelectItem>
-                  <SelectItem value="D4">D4</SelectItem>
-                  <SelectItem value="D5">D5</SelectItem>
-                  <SelectItem value="D6">D6</SelectItem>
-                  <SelectItem value="D7">D7</SelectItem>
-                  <SelectItem value="D8">D8</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label htmlFor="rows" className="block text-sm font-medium text-gray-700">Rows:</label>
-              <Select value={rows} onValueChange={setRows}>
-                <SelectTrigger id="rows" className="w-full">
-                  <SelectValue placeholder="Select rows" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rowsOptions.map(r => (
-                    <SelectItem key={r} value={r}>{r}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {[{ label: 'Sum(s):', value: sums, setter: setSums, options: sumsOptions },
+              { label: 'Type:', value: type, setter: setType, options: typeOptions },
+              { label: 'Rows:', value: rows, setter: setRows, options: rowsOptions },
+              { label: 'Total Time (sec):', value: time, setter: setTime, options: timesOptions }].map(({ label, value, setter, options }) => (
+                <div key={label}>
+                  <label className="block text-sm font-medium text-gray-700">{label}</label>
+                  <Select value={value} onValueChange={setter}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
+                    <SelectContent>
+                      {options.map(option => (<SelectItem key={option} value={option}>{option}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
           </div>
-          <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={openDictationDiv}>Load Activity</Button>
+          <Button className="w-full bg-teal-600 hover:bg-teal-700" onClick={startDictation}>Start Dictation</Button>
         </div>
 
-        {openDictation && (
-          <div className="p-4 space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-              <div className="text-lg font-semibold text-orange-500">{`${type} - ${rows} Rows [ ${sums} Sum(s) ]`}</div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="time" className="text-sm font-medium text-gray-700">Total Time</label>
-                <Select value={time} onValueChange={setTime}>
-                  <SelectTrigger id="time" className="w-32">
-                    <SelectValue placeholder="Select time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timesOptions.map(t => (
-                      <SelectItem key={t} value={t}>{t} Seconds</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="flex flex-wrap gap-4 p-4 justify-center">
+          {accumulatedNumbers.map((accNumbers, index) => (
+            sums === '1' && index === 1 ? null : (
+              <div key={index} className="w-full md:w-1/2 text-center">
+                {dictationActive && <div className="text-6xl font-bold text-blue-500">{currentNumbers[index] ?? '-'}</div>}
+                {dictationEnded && showAnswer && <p className="text-lg">Correct Answer: {numbersRef.current[index].reduce((acc, num) => acc + num, 0)}</p>}
+                {dictationEnded && <Input className="w-full text-2xl text-center font-bold text-orange-600" placeholder="Enter your answer" />}
+                <p className="p-2 text-3xl font-bold text-blue-500">{accNumbers}</p>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={startDictation}>Start</Button>
-              <Button variant="outline" className="flex-1 border-teal-600 text-teal-600 hover:bg-teal-50" onClick={handleReload}>Reload</Button>
-            </div>
-          </div>
-        )}
+            )
+          ))}
+        </div>
 
-        {dictationActive && (
-          <div className="p-4 space-y-4">
-            <div className="border-l-4 border-green-500 pl-4">
-              <div className="text-6xl sm:text-8xl font-bold text-blue-500 text-center">{currentNumber !== null ? currentNumber : '-'}</div>
-            </div>
-            <Input
-              type="text"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="w-full text-4xl font-bold text-orange-600"
-              placeholder="Enter your answer"
-            />
-            <div className="border p-2 rounded h-24 overflow-y-auto bg-gray-100">
-              <p className="text-4xl font-bold text-purple-600">{correctAnswer.join(', ')}</p>
-            </div>
-          </div>
-        )}
-
-        {dictationEnded && (
-          <div className="p-4">
-            <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleShowAnswer}>Correct Answer</Button>
-          </div>
-        )}
+        {dictationEnded && <div className="p-4"><Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowAnswer(true)}>Correct Answer</Button></div>}
       </div>
     </div>
   )

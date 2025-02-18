@@ -133,7 +133,7 @@ const HomePage = () => {
                   </Link>
                   <Link to="/dashboard/kids-dictation" className="flex items-center gap-4 rounded-xl px-3 py-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
                     <Home className="h-5 w-5" />
-                    Home
+                    Kids Dictation
                   </Link>
                   <Link to="/dashboard/register" className="flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
                     <GraduationCap className="h-5 w-5" />
