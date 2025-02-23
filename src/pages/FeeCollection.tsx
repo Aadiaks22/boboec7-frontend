@@ -139,19 +139,6 @@ const FeeCollection = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // useEffect(() => {
-  //   const fetchReceiptNumber = async () => {
-  //     try {
-  //       const response = await fetch(`${BASE_URL}/api/admin/receipt-number`);
-  //       const data = await response.json();
-  //       setReceiptNumber(data.receiptNumber);
-  //     } catch (error) {
-  //       console.error('Error fetching receipt number:', error);
-  //     }
-  //   };
-
-  //   fetchReceiptNumber();
-  // }, []);
 
   const { id: r_id } = useParams<{ id: string }>(); // Extract the student ID from the route
   const [student, setStudent] = useState<Student | null>(null); // State to store student details
@@ -222,23 +209,6 @@ const FeeCollection = () => {
     const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
     setCurrentDate(formattedDate);
 
-    // const fetchStudent = async () => {
-    //   try {
-    //     const response = await fetch(`${BASE_URL}/api/admin/user/${id}`);
-    //     if (!response.ok) {
-    //       throw new Error("Failed to fetch student details");
-    //     }
-    //     const data = await response.json();
-
-    //     //console.log("Student Data:", data); // Log the student data to the console
-
-    //     setStudent(data); // Set the fetched student details
-    //   } catch (error) {
-    //     console.error("Error fetching student:", error);
-    //   }
-    // };
-
-    // fetchStudent();
 
     if(id)
       studentdata.mutate(id);
@@ -401,28 +371,6 @@ const FeeCollection = () => {
 
         addreciept.mutate(formData);
 
-        // const response = await fetch(`${BASE_URL}/api/admin/addreciept`, {
-        //   method: 'POST',
-        //   headers: {
-        //     'auth-token': authToken, // Ensure you have the auth token here
-        //   },
-        //   body: formData,
-        // });
-
-        // if (!response.ok) {
-        //   const errorResponse = await response.json();
-        //   throw new Error(errorResponse.message || 'Failed to save receipt');
-        // }
-
-        // const json = await response.json();
-
-        // if (json.success) {
-        //   setIsSaved(true);
-        //   setSuccessMessage('Receipt saved successfully');
-
-        // } else {
-        //   setErrorMessage('Error in saving receipt');
-        // }
       } catch (error) {
         if (error instanceof Error) {
           setErrorMessage(error.message);
@@ -622,84 +570,6 @@ const FeeCollection = () => {
                 )}
               </td>
             </tr>
-            {/* Checking if 'student' exists */}
-            {/* {r_id && (
-              <>
-                <tr>
-                  <td className="border border-black p-1 print:p-[2px]">Kit Fee</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]"></td>
-                  <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`kitFee${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={kitFee}
-                      onChange={(e) => setkitFee(Number(e.target.value))}
-                      readOnly={copy === 2}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
-                  <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`centralTax25${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={centralTax25.toFixed(2)}
-                      readOnly
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
-                  <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`stateTax25${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={stateTax25.toFixed(2)}
-                      readOnly
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-1 print:p-[2px]">Jacket Fee</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]"></td>
-                  <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`jacketFee${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={jacketFee}
-                      onChange={(e) => setjacketFee(Number(e.target.value))}
-                      readOnly={copy === 2}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
-                  <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`centralTax06${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={centralTax06.toFixed(2)}
-                      readOnly
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
-                  <td className="border border-black p-1 print:p-[2px]">
-                    <Input
-                      name={`stateTax06${copy}`}
-                      className="w-full text-center border-none bg-transparent p-0 h-auto"
-                      value={stateTax06.toFixed(2)}
-                      readOnly
-                    />
-                  </td>
-                </tr></>
-            )} */}
           </tbody>
         </table>)}
 
@@ -924,11 +794,7 @@ const FeeCollection = () => {
           <div className="print:hidden">
             <Demo3 onAddStudent={handleAddStudent} />
           </div>)}
-
-        {/* <div>
-          {errorMessage && <div className="error-message text-red-500">{errorMessage}</div>}
-          {successMessage && <div className="success-message text-green-500 print:hidden ml-4">{successMessage}</div>}
-        </div> */}
+          
         {errorMessage && (
                 <Alert variant="destructive" className="print:hidden mb-4">
                   <XCircle className="h-4 w-4" />

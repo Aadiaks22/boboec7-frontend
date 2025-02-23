@@ -28,38 +28,6 @@ export default function Component() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  //const queryClient = useQueryClient()
-
-
-  // useEffect(() => {
-  //   const fetchReceiptData = async () => {
-  //     try {
-  //       const response = await axios.get(`${BASE_URL}/api/admin/getreciept`)
-  //       if (!response.data) {
-  //         throw new Error("Failed to fetch receipt data")
-  //       }
-
-  //       const data = await response.data;
-
-  //       if (data) {
-  //         setReceiptData(Array.isArray(data) ? data : [data])
-  //       } else {
-  //         throw new Error("Receipt not found")
-  //       }
-  //     } catch (error) {
-  //       if (error instanceof Error) {
-  //         setError(error.message)
-  //       } else {
-  //         setError("An unknown error occurred")
-  //       }
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-
-  //   fetchReceiptData()
-  // }, [])
-
 
   const mutation = useMutation({
     mutationFn: getReceipt,
