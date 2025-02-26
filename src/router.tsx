@@ -13,6 +13,16 @@ import ProtectedRoute from "./protectedroute";
 
 const router = createBrowserRouter([
   {
+    path: '/',
+    element: <AuthLayout/>,
+    children: [
+      {
+        index: true,  // This makes it the default route
+        element: <LoginPage />
+      }
+    ]
+  },
+  {
     path: "*",
     element: <NotFound />,
   },
@@ -52,16 +62,6 @@ const router = createBrowserRouter([
             element: <FeeInvoice/>
           }
         ]
-      }
-    ]
-  },
-  {
-    path: '/auth',
-    element: <AuthLayout/>,
-    children: [
-      {
-        path: 'login',
-        element: <LoginPage />
       }
     ]
   }

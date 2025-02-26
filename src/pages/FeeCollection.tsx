@@ -446,7 +446,7 @@ const FeeCollection = () => {
             id={`date${copy}`}
             name={`date${copy}`}
             value={currentDate}
-            readOnly
+            //readOnly
           />
         </div>
       </div>

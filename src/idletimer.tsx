@@ -44,7 +44,7 @@ export default function IdleTimer({ timeout }: IdleTimerProps) {
     if (isIdle) {
       Cookies.remove('token');
       //Cookies.remove('username');
-      navigate('/auth/login', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isIdle, navigate]);
 

@@ -2,7 +2,9 @@ import axios, { AxiosError } from 'axios';
 import { LoginResponse, LoginError } from '../types/api';
 
 //import Cookies from 'js-cookie'
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
+console.log(BASE_URL);
+//const BASE_URL = "https://bobkidsportalbackend.onrender.com";
 
 interface CreateUserResponse {
     authToken: string;
@@ -72,7 +74,7 @@ interface LoginCredentials {
   
   export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      const response = await axios.post<LoginResponse>('/api/auth/login', credentials);
+      const response = await axios.post<LoginResponse>(`${BASE_URL}/api/auth/login`, credentials);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {

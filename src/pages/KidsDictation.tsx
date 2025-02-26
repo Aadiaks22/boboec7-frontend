@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Input } from '@/components/ui/input'
+//import { Input } from '@/components/ui/input'
 
 const sumsOptions = ['1', '2']
 const rowsOptions = Array.from({ length: 100 }, (_, i) => (i + 3).toString())
@@ -110,16 +110,16 @@ export default function DictationComponent() {
           {accumulatedNumbers.map((accNumbers, index) => (
             sums === '1' && index === 1 ? null : (
               <div key={index} className="w-full md:w-1/2 text-center">
-                {dictationActive && <div className="text-6xl font-bold text-blue-500">{currentNumbers[index] ?? '-'}</div>}
-                {dictationEnded && showAnswer && <p className="text-lg">Correct Answer: {numbersRef.current[index].reduce((acc, num) => acc + num, 0)}</p>}
-                {dictationEnded && <Input className="w-full text-2xl text-center font-bold text-orange-600" placeholder="Enter your answer" />}
-                <p className="p-2 text-3xl font-bold text-blue-500">{accNumbers}</p>
+                {dictationActive && <div className="text-9xl font-bold text-blue-500">{currentNumbers[index] ?? '-'}</div>}
+                {dictationEnded && showAnswer && <p className="text-9xl font-bold text-green-500">{numbersRef.current[index].reduce((acc, num) => acc + num, 0)}</p>}
+                {/* {dictationEnded && <Input className="w-full text-2xl text-center font-bold text-orange-600" placeholder="Enter your answer" />} */}
+                <p className="p-2 text-5xl font-bold text-blue-500">{accNumbers}</p>
               </div>
             )
           ))}
         </div>
 
-        {dictationEnded && <div className="p-4"><Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowAnswer(true)}>Correct Answer</Button></div>}
+        {dictationEnded && <div className="p-4"><Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={() => setShowAnswer(true)}>Answer</Button></div>}
       </div>
     </div>
   )

@@ -243,7 +243,5 @@ export default function Component() {
         </div>
       </CardContent>
     </Card>
-
-
   )
 }

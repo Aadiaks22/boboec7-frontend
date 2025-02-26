@@ -41,7 +41,7 @@ const HomePage = () => {
     Cookies.remove('username');
     // localStorage.removeItem('token');
     // localStorage.removeItem('username');
-    navigate("/auth/login");
+    navigate("/");
   }
 
   const toggleSidebar = () => {
