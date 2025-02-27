@@ -58,7 +58,6 @@ const RegisterStudent = () => {
     mutationFn: fetchStudent,
     onSuccess: (data) => {
       if (data) {
-        console.log(data);
         setCredentials({
           name: data.name,
           student_class: data.student_class,
@@ -75,8 +74,6 @@ const RegisterStudent = () => {
           level: data.level,
           status: data.status,
         });
-      } else {
-        console.log("No student data found.");
       }
     },
     onError: (error) => {
@@ -102,7 +99,6 @@ const RegisterStudent = () => {
   const updateMutation = useMutation({
     mutationFn: updateStudentData,
     onSuccess: () => {
-      console.log("Update Successful");
       setIsModalOpen(false);
       navigate(`/dashboard/register-student`);
     },
@@ -130,14 +126,6 @@ const RegisterStudent = () => {
   const onSelectChange = (e: string, field: string) => {
     setCredentials({ ...credentials, [field]: e });
   };
-
-
-  // console.log('Modal Open',isModalOpen);
-
-  // useEffect(() => {
-  //   console.log("Credentials Updated:", credentials);
-  // }, [credentials]);
-
 
 
   return (

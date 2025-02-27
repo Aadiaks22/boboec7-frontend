@@ -94,7 +94,6 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
   const updateMutation = useMutation({
     mutationFn: updateStudentData,
     onSuccess: () => {
-      console.log("Update Successful");
 
     },
     onError: (error) => {

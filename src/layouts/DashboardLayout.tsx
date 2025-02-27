@@ -39,8 +39,6 @@ const HomePage = () => {
   const handleLogout = () => {
     Cookies.remove('token');
     Cookies.remove('username');
-    // localStorage.removeItem('token');
-    // localStorage.removeItem('username');
     navigate("/");
   }
 

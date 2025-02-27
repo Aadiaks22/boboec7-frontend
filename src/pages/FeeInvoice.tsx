@@ -22,7 +22,6 @@ interface ReceiptData {
   exercisenkitFee: number
   net_amount: number
   totalAmountInWords: string
-  reciept_img: string
   payment_mode: string
 }
 
@@ -37,7 +36,6 @@ interface Credentials {
   exercisenkitFee: string | number
   net_amount: string | number
   totalAmountInWords: string
-  reciept_img: string
   payment_mode: string
 }
 
@@ -52,7 +50,6 @@ export default function Component() {
   const itemsPerPage = 10
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  //const [id, setId] = useState<number | null>(null)
   const [credentials, setCredentials] = useState<Credentials>({
     reciept_number: "",
     scode: "",
@@ -64,7 +61,6 @@ export default function Component() {
     exercisenkitFee: "",
     net_amount: "",
     totalAmountInWords: "",
-    reciept_img: "",
     payment_mode: "",
   })
 
@@ -84,11 +80,10 @@ export default function Component() {
           exercisenkitFee: data.exercisenkitFee,
           net_amount: data.net_amount,
           totalAmountInWords: data.totalAmountInWords,
-          reciept_img: data.reciept_img,
           payment_mode: data.payment_mode,
         })
       } else {
-        console.log("No receipt data found.")
+        console.error("No receipt data found.")
       }
     },
     onError: (error) => {
@@ -503,7 +498,6 @@ export default function Component() {
             </div>
             <Button
               className="mt-4 bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => console.log("Search clicked")}
             >
               Search
             </Button>
@@ -519,7 +513,6 @@ export default function Component() {
                   <TableHead className="font-semibold text-green-800 dark:text-green-200">Paid Upto</TableHead>
                   <TableHead className="font-semibold text-green-800 dark:text-green-200">Net Amount</TableHead>
                   <TableHead className="font-semibold text-green-800 dark:text-green-200">View Receipt</TableHead>
-                  <TableHead className="font-semibold text-green-800 dark:text-green-200">Receipt Modal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -530,22 +523,11 @@ export default function Component() {
                     <TableCell>{new Date(invoice.date).toLocaleString()}</TableCell>
                     <TableCell>{invoice.paid_upto} Level</TableCell>
                     <TableCell>Rs.{invoice.net_amount.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <a
-                        href={`/backend/public${invoice.reciept_img}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center w-8 h-8 text-sm font-medium rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">View Receipt</span>
-                      </a>
-                    </TableCell>
                     <TableCell
                       onClick={() => openModal(invoice.reciept_number)}
                       className="cursor-pointer text-blue-500 hover:underline"
                     >
-                      Open Receipt
+                      <Eye className="h-4 w-4" />
                     </TableCell>
                   </TableRow>
                 ))}

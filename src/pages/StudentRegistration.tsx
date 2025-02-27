@@ -34,9 +34,7 @@ const StudentRegistrationForm = () => {
   const mutation = useMutation({
     mutationFn: createuser,
     onSuccess: (data) => {
-      console.log("User created successfully")
       const { user } = jwtDecode<{ user: { id: string } }>(data.authToken)
-      console.log("Student ID:", user.id)
       if (user.id) {
         navigate(`/dashboard/fee-collection/${user.id}`)
       } else {

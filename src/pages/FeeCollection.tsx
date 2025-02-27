@@ -8,11 +8,11 @@ import { PrinterIcon, SaveIcon } from 'lucide-react';
 import './FeeCollection.css';
 import './FeeCollectionSearch';
 import Demo3 from "./FeeCollectionSearch";
-import html2canvas from "html2canvas";
 import { useMutation } from "@tanstack/react-query";
 import { fetchReceiptNumber, fetchStudent, saveReceipt, savemReceipt, updateStudentData } from "@/http/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from 'lucide-react';
+import Cookies from 'js-cookie';
 
 interface Student {
   _id: string;
@@ -50,7 +50,7 @@ const LevelDropdown: React.FC<LevelDropdownProps> = ({ level, onLevelChange }) =
         name="level"
         value={level}
         onChange={(e) => onLevelChange(e.target.value)}
-        className="w-auto ml-2 border-none bg-transparent"
+        className="appearance-none w-auto ml-2 border-none bg-transparent"
         style={{
           paddingTop: "0px",
           paddingBottom: "0px",
@@ -86,7 +86,7 @@ const ModeDropdown: React.FC<ModeDropdownProps> = ({ mode, onModeChange }) => {
         name="mode"
         value={mode}
         onChange={(e) => onModeChange(e.target.value)}
-        className="w-auto ml-2 border-none bg-transparent"
+        className="appearance-none w-auto ml-2 border-none bg-transparent"
         style={{
           paddingTop: "0px",
           paddingBottom: "0px",
@@ -104,9 +104,6 @@ const ModeDropdown: React.FC<ModeDropdownProps> = ({ mode, onModeChange }) => {
     </div>
   );
 };
-
-
-//const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const FeeCollection = () => {
 
@@ -154,13 +151,13 @@ const FeeCollection = () => {
   const [courseFee, setCourseFee] = useState<number>(0);
   const [exerciseBookFee, setExerciseBookFee] = useState<number>(0);
   const [kitFee, setkitFee] = useState<number>(0);
-  const [jacketFee, setjacketFee] = useState<number>(0);
+  //const [jacketFee, setjacketFee] = useState<number>(0);
   const [centralTax9, setCentralTax9] = useState<number>(0);
   const [stateTax9, setStateTax9] = useState<number>(0);
   const [centralTax6, setCentralTax6] = useState<number>(0);
   const [stateTax6, setStateTax6] = useState<number>(0);
-  const [centralTax25, setCentralTax25] = useState<number>(0);
-  const [stateTax25, setStateTax25] = useState<number>(0);
+  //const [centralTax25, setCentralTax25] = useState<number>(0);
+  //const [stateTax25, setStateTax25] = useState<number>(0);
   //const [centralTax06, setCentralTax06] = useState<number>(0);
   //const [stateTax06, setStateTax06] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
@@ -169,19 +166,18 @@ const FeeCollection = () => {
   const [mkitFee, setMKitFee] = useState<number>(0);
 
   const handleAddStudent = (studentId: string) => {
-    console.log("Student ID for fee collection:", studentId);
     // You can now use this studentId in your fee collection logic
     setSId(studentId); // Store the student ID
     setCourseFee(0);
     setExerciseBookFee(0);
     setkitFee(0);
-    setjacketFee(0);
+    //setjacketFee(0);
     setCentralTax9(0);
     setStateTax9(0);
     setCentralTax6(0);
     setStateTax6(0);
-    setCentralTax25(0);
-    setStateTax25(0);
+    //setCentralTax25(0);
+    //setStateTax25(0);
     //setCentralTax06(0);
     //setStateTax06(0);
     setMCourseFee(0);
@@ -207,10 +203,11 @@ const FeeCollection = () => {
 
   useEffect(() => {
     // Set the current date in "DD/MM/YYYY" format
-    const today = new Date();
-    const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-    setCurrentDate(formattedDate);
-
+    // const today = new Date();
+    // const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    // setCurrentDate(formattedDate);
+    const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+    setCurrentDate(today);
 
     if (id)
       studentdata.mutate(id);
@@ -223,27 +220,27 @@ const FeeCollection = () => {
     const calculatedStateTax9 = courseFee * 0.09;
     const calculatedCentralTax6 = exerciseBookFee * 0.06;
     const calculatedStateTax6 = exerciseBookFee * 0.06;
-    const calculatedCentralTax25 = kitFee * 0.025;
-    const calculatedStateTax25 = kitFee * 0.025;
-    const calculatedCentralTax06 = jacketFee * 0.06;
-    const calculatedStateTax06 = jacketFee * 0.06;
+    //const calculatedCentralTax25 = kitFee * 0.025;
+    //const calculatedStateTax25 = kitFee * 0.025;
+    //const calculatedCentralTax06 = jacketFee * 0.06;
+    //const calculatedStateTax06 = jacketFee * 0.06;
 
     setCentralTax9(calculatedCentralTax9);
     setStateTax9(calculatedStateTax9);
     setCentralTax6(calculatedCentralTax6);
     setStateTax6(calculatedStateTax6);
-    setCentralTax25(calculatedCentralTax25);
-    setStateTax25(calculatedStateTax25);
+    //setCentralTax25(calculatedCentralTax25);
+    //setStateTax25(calculatedStateTax25);
     //setCentralTax06(calculatedCentralTax06);
     //setStateTax06(calculatedStateTax06);
 
 
 
     // Calculate total amount (Course Fee + Exercise Book Fee + All Taxes)
-    const total = courseFee + exerciseBookFee + kitFee + jacketFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax25 + calculatedStateTax25 + calculatedCentralTax06 + calculatedStateTax06 + mcourseFee + mkitFee;
+    const total = courseFee + exerciseBookFee + kitFee  + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6  + mcourseFee + mkitFee;
     setTotalAmount(total);
     setTotalAmountInWords(numberToWords.toWords(total).toUpperCase()); // Convert number to words
-  }, [courseFee, exerciseBookFee, kitFee, jacketFee, mcourseFee, mkitFee]);
+  }, [courseFee, exerciseBookFee, kitFee, mcourseFee, mkitFee]);
 
   const handleLevelChange = (newLevel: string) => {
     if (student) {
@@ -260,9 +257,7 @@ const FeeCollection = () => {
   const updateMutation = useMutation({
     mutationFn: updateStudentData,
     onSuccess: () => {
-      console.log("Level Update Successful");
-      //setIsModalOpen(false);
-      //navigate(`/dashboard/register-student`);
+
     },
     onError: (error) => {
       console.error("An error occurred:", error);
@@ -323,9 +318,7 @@ const FeeCollection = () => {
         return;
       }
 
-      // Capture the invoice content as an image using html2canvas
-      const invoiceElement = document.querySelector('.invoice') as HTMLElement;
-      const authToken = localStorage.getItem('token'); // Ensure the key matches how you're storing the token
+      const authToken = Cookies.get('token'); // Ensure the key matches how you're storing the token
 
       if (!authToken) {
         console.error('No auth token found');
@@ -336,73 +329,29 @@ const FeeCollection = () => {
         updateMutation.mutate({ id: id, updateData: student }); // Pass the right types
       }
 
-      if (invoiceElement) {
-        try {
-          const canvas = await html2canvas(invoiceElement, {
-            scale: 4, // Increase scale for better quality
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            logging: true,
-            windowWidth: invoiceElement.scrollWidth * 2,
-            windowHeight: invoiceElement.scrollHeight * 2,
-            onclone: (clonedDoc) => {
-              // Add specific styles to the cloned document
-              Array.from(clonedDoc.getElementsByClassName('invoice')).forEach((element) => {
-                (element as HTMLElement).style.fontFamily = 'Arial, sans-serif';
-                (element as HTMLElement).style.color = '#000000';
-                (element as HTMLElement).style.backgroundColor = '#ffffff';
-              });
+      try {
+        // Create FormData to send the image as a file
+        const formData = new FormData();
+        formData.append('reciept_number', receiptNumber.toString());
+        formData.append('scode', student?.student_code || "");
+        formData.append('name', student?.name || "");
+        formData.append('course', student?.course || "");
+        formData.append('paid_upto', student?.level || "");
+        formData.append('date', new Date().toISOString());
+        formData.append('courseFee', courseFee.toString());
+        formData.append('exercisenkitFee', kitFee.toString() || exerciseBookFee.toString());
+        formData.append('net_amount', totalAmount.toString());
+        formData.append('totalAmountInWords', totalAmountInWords);
+        formData.append('payment_mode', paymentMode);
 
-              // Ensure all input values and select options are visible
-              clonedDoc.querySelectorAll('input, select').forEach((el) => {
-                const span = clonedDoc.createElement('span');
-                span.textContent = (el as HTMLInputElement | HTMLSelectElement).value;
-                span.style.fontFamily = 'Arial, sans-serif';
-                span.style.color = '#000000';
-                el.parentNode?.replaceChild(span, el);
-              });
+        addreciept.mutate(formData);
 
-              // Ensure level and mode are visible
-              clonedDoc.querySelectorAll('[for="level"], [for="mode"]').forEach((label) => {
-                const span = label.nextElementSibling as HTMLSpanElement;
-                if (span) {
-                  span.style.fontFamily = 'Arial, sans-serif';
-                  span.style.color = '#000000';
-                  span.style.fontSize = '12px';
-                }
-              });
-            }
-          });
-          const imageBlob = await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob as Blob), 'image/png'));
-
-          // Create FormData to send the image as a file
-          const formData = new FormData();
-          formData.append('reciept_number', receiptNumber.toString());
-          formData.append('scode', student?.student_code || "");
-          formData.append('name', student?.name || "");
-          formData.append('course', student?.course || "");
-          formData.append('paid_upto', student?.level || "");
-          formData.append('date', new Date().toISOString());
-          formData.append('courseFee', courseFee.toString());
-          formData.append('exercisenkitFee', kitFee.toString() || exerciseBookFee.toString());
-          formData.append('net_amount', totalAmount.toString());
-          formData.append('totalAmountInWords', totalAmountInWords);
-          formData.append('reciept_img', imageBlob, `receipt_${receiptNumber}.png`); // Append image as a file
-          formData.append('payment_mode', paymentMode);
-
-          console.log("FormData being sent:", formData); // Log the request  body
-
-          addreciept.mutate(formData);
-
-        } catch (error) {
-          if (error instanceof Error) {
-            setErrorMessage(error.message);
-          } else {
-            setErrorMessage('An unknown error occurred');
-          }
+      } catch (error) {
+        if (error instanceof Error) {
+          setErrorMessage(error.message);
+        } else {
+          setErrorMessage('An unknown error occurred');
         }
-      } else {
-        setErrorMessage('Invoice element not found');
       }
     }
     else {
@@ -429,9 +378,7 @@ const FeeCollection = () => {
         return;
       }
 
-      // Capture the invoice content as an image using html2canvas
-      //const invoiceElement = document.querySelector('.invoice') as HTMLElement;
-      const authToken = localStorage.getItem('token'); // Ensure the key matches how you're storing the token
+      const authToken = Cookies.get('token'); // Ensure the key matches how you're storing the token
 
       if (!authToken) {
         console.error('No auth token found');
@@ -445,8 +392,6 @@ const FeeCollection = () => {
       // Create FormData to send the image as a file
       const formData = new FormData();
       formData.append('mreceiptNo', mreceiptNo.toString());
-      console.log(mreceiptNo);
-      console.log("FormData being sent:", formData); // Log the request  body
 
       addmreciept.mutate(formData);
 
@@ -524,13 +469,16 @@ const FeeCollection = () => {
           />
         </div>
         <div className="flex">
-          <Label className="mt-1 font-bold" htmlFor={`date${copy}`}>Date:</Label>
+          <Label className="mt-1 font-bold" htmlFor={`date${copy}`}>
+            Date:
+          </Label>
           <Input
+            type="date"
             className="w-auto ml-1 border-none bg-transparent p-0 h-auto font-sans text-black [&]:font-sans"
             id={`date${copy}`}
             name={`date${copy}`}
             value={currentDate}
-            readOnly
+            onChange={(e) => setCurrentDate(e.target.value)}
           />
         </div>
       </div>
@@ -680,17 +628,17 @@ const FeeCollection = () => {
                 </tr>
                 <tr>
                   <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                   <td className="border border-black p-1 print:p-[2px]">
                     {copy === 2 ? (
                       <span className="w-full text-center block font-['Arial'] text-black">
-                        {centralTax25.toFixed(2)}
+                        {centralTax6.toFixed(2)}
                       </span>
                     ) : (
                       <Input
-                        name={`centralTax25${copy}`}
+                        name={`centralTax6${copy}`}
                         className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
-                        value={centralTax25.toFixed(2)}
+                        value={centralTax6.toFixed(2)}
                         readOnly
                       />
                     )}
@@ -698,17 +646,17 @@ const FeeCollection = () => {
                 </tr>
                 <tr>
                   <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
-                  <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
+                  <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                   <td className="border border-black p-1 print:p-[2px]">
                     {copy === 2 ? (
                       <span className="w-full text-center block font-['Arial'] text-black">
-                        {stateTax25.toFixed(2)}
+                        {stateTax6.toFixed(2)}
                       </span>
                     ) : (
                       <Input
-                        name={`stateTax25${copy}`}
+                        name={`stateTax6${copy}`}
                         className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
-                        value={stateTax25.toFixed(2)}
+                        value={stateTax6.toFixed(2)}
                         readOnly
                       />
                     )}

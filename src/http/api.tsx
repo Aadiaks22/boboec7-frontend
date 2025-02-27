@@ -1,11 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import { LoginResponse, LoginError } from '../types/api';
+import Cookies from 'js-cookie';
 
-//import Cookies from 'js-cookie'
 //const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-//console.log(BASE_URL);
-//const BASE_URL = "https://bobkidsportalbackend.onrender.com";
 
 interface CreateUserResponse {
     authToken: string;
@@ -71,26 +69,25 @@ interface LoginCredentials {
     contact_number: string;
     password: string;
     role: string;
-  }
-  
-  export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+}
+
+export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      //const response = await axios.post<LoginResponse>(`${BASE_URL}/api/auth/login`, credentials);
-      const response = await axios.post<LoginResponse>(`/api/auth/login`, credentials);
-      return response.data;
+        const response = await axios.post<LoginResponse>(`${BASE_URL}/api/auth/login`, credentials);
+        return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<LoginError>;
-        if (axiosError.response) {
-          const errorData = axiosError.response.data;
-          throw new Error(errorData.error || 'An error occurred during login.');
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError<LoginError>;
+            if (axiosError.response) {
+                const errorData = axiosError.response.data;
+                throw new Error(errorData.error || 'An error occurred during login.');
+            }
         }
-      }
-      throw new Error('An unexpected error occurred. Please try again later.');
+        throw new Error('An unexpected error occurred. Please try again later.');
     }
-  };
-  
-  
+};
+
+
 
 export const createuser = async (data: {
     name: string
@@ -124,7 +121,7 @@ export const fetchStudent = async (id: string | null): Promise<FetchStudentRespo
 
 // Combined function for updating student details
 export const updateStudentData = async ({ id, updateData }: UpdateStudentDataParams) => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get('token');
     if (!token) {
         console.error("No auth token found");
         throw new Error("Authorization token is missing");
@@ -167,16 +164,19 @@ export const addReceipt = async ({ formData, authToken }: { formData: FormData, 
 
 // Function to save the receipt data
 export const saveReceipt = async (data: FormData) => {
-    const authToken = localStorage.getItem('token');
+    const authToken = Cookies.get('token');
     const response = await axios.post(`${BASE_URL}/api/admin/addreciept`, data, {
-        headers: { 'auth-token': authToken },
+        headers: {
+            'auth-token': authToken,
+            "Content-Type": "application/json"
+        },
     });
     return response.data;
 };
 
 // Function to save the mreceipt data
 export const savemReceipt = async (data: FormData) => {
-    const authToken = localStorage.getItem('token');
+    const authToken = Cookies.get('token');
 
     // Extract mreceiptNo from FormData
     const mreceiptNo = data.get("mreceiptNo");
@@ -189,10 +189,8 @@ export const savemReceipt = async (data: FormData) => {
         mreceiptNo: Number(mreceiptNo),  // Ensure it's a number
     };
 
-    console.log("Sending Payload:", JSON.stringify(payload)); // Debugging
-
     const response = await axios.post(`${BASE_URL}/api/admin/addmreciept`, JSON.stringify(payload), {
-        headers: { 
+        headers: {
             'auth-token': authToken,
             'Content-Type': 'application/json'
         },
@@ -212,16 +210,15 @@ export const getReceipt = async () => {
 
 export const getReceiptbyid = async (id: number) => {
     try {
-      const response = await fetch(`${BASE_URL}/api/admin/receipts/${id}`)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const data = await response.json()
-      return data
+        const response = await fetch(`${BASE_URL}/api/admin/receipts/${id}`)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        return data
     } catch (error) {
-      console.error("Failed to fetch receipt:", error)
-      throw error
+        console.error("Failed to fetch receipt:", error)
+        throw error
     }
-  }
-  
-  
+}
+

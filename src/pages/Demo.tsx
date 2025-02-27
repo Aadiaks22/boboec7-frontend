@@ -158,7 +158,7 @@ export default function Component() {
               </div>
             </div>
           </div>
-          <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white" onClick={() => console.log("Search clicked")}>
+          <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
             Search
           </Button>
         </div>
