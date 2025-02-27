@@ -150,7 +150,7 @@ const LoginPage = () => {
                   <Input
                     ref={phoneRef}
                     id="phone"
-                    type="tel"
+                    type="text"
                     placeholder={`Enter your ${activeForm === "admin" ? "username" : "mobile number"}`}
                     required
                     className="bg-orange-50 border-orange-300 focus:border-orange-500 focus:ring-orange-500"
