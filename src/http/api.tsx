@@ -2,8 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { LoginResponse, LoginError } from '../types/api';
 import Cookies from 'js-cookie';
 
-//const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 interface CreateUserResponse {
     authToken: string;
