@@ -44,6 +44,7 @@ const LoginPage = () => {
     onSuccess: (data) => {
       setSuccess("Login successful. Redirecting...");
       const options = {
+        //httpOnly: true, 
         expires: new Date(Date.now() + 3 * 60 * 60 * 1000),
         secure: true,
         sameSite: 'strict' as const
