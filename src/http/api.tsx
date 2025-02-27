@@ -2,8 +2,9 @@ import axios, { AxiosError } from 'axios';
 import { LoginResponse, LoginError } from '../types/api';
 
 //import Cookies from 'js-cookie'
-const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
-console.log(BASE_URL);
+//const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+//console.log(BASE_URL);
 //const BASE_URL = "https://bobkidsportalbackend.onrender.com";
 
 interface CreateUserResponse {
@@ -74,7 +75,8 @@ interface LoginCredentials {
   
   export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      const response = await axios.post<LoginResponse>(`${BASE_URL}/api/auth/login`, credentials);
+      //const response = await axios.post<LoginResponse>(`${BASE_URL}/api/auth/login`, credentials);
+      const response = await axios.post<LoginResponse>(`/api/auth/login`, credentials);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -172,6 +174,34 @@ export const saveReceipt = async (data: FormData) => {
     return response.data;
 };
 
+// Function to save the mreceipt data
+export const savemReceipt = async (data: FormData) => {
+    const authToken = localStorage.getItem('token');
+
+    // Extract mreceiptNo from FormData
+    const mreceiptNo = data.get("mreceiptNo");
+
+    if (!mreceiptNo) {
+        throw new Error("mreceiptNo is missing in FormData");
+    }
+
+    const payload = {
+        mreceiptNo: Number(mreceiptNo),  // Ensure it's a number
+    };
+
+    console.log("Sending Payload:", JSON.stringify(payload)); // Debugging
+
+    const response = await axios.post(`${BASE_URL}/api/admin/addmreciept`, JSON.stringify(payload), {
+        headers: { 
+            'auth-token': authToken,
+            'Content-Type': 'application/json'
+        },
+    });
+
+    return response.data;
+};
+
+
 export const getReceipt = async () => {
     const response = await api.get(`${BASE_URL}/api/admin/getreciept`);
     if (!response.data) {
@@ -179,3 +209,19 @@ export const getReceipt = async () => {
     }
     return response.data;
 };
+
+export const getReceiptbyid = async (id: number) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/admin/receipts/${id}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Failed to fetch receipt:", error)
+      throw error
+    }
+  }
+  
+  
