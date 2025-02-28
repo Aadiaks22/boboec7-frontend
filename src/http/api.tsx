@@ -123,7 +123,7 @@ export const fetchStudent = async (id: string | null): Promise<FetchStudentRespo
 export const updateStudentData = async ({ id, updateData }: UpdateStudentDataParams) => {
     const token = Cookies.get('token');
     if (!token) {
-        console.error("No auth token found");
+        //console.error("No auth token found");
         throw new Error("Authorization token is missing");
     }
 

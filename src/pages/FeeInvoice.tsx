@@ -10,6 +10,7 @@ import { getReceipt, getReceiptbyid } from "@/http/api"
 import { useMutation } from "@tanstack/react-query"
 import Modal from "react-modal"
 import { Label } from "@/components/ui/label"
+import { AxiosError } from 'axios';
 
 interface ReceiptData {
   reciept_number: number
@@ -19,7 +20,8 @@ interface ReceiptData {
   date: string
   paid_upto: string
   courseFee: number
-  exercisenkitFee: number
+  exerciseFee: number
+  kitFee: number
   net_amount: number
   totalAmountInWords: string
   payment_mode: string
@@ -33,7 +35,8 @@ interface Credentials {
   date: string
   paid_upto: string
   courseFee: string | number
-  exercisenkitFee: string | number
+  exerciseFee: string | number
+  kitFee: string | number
   net_amount: string | number
   totalAmountInWords: string
   payment_mode: string
@@ -58,7 +61,8 @@ export default function Component() {
     date: "",
     paid_upto: "",
     courseFee: "",
-    exercisenkitFee: "",
+    exerciseFee: "",
+    kitFee: "",
     net_amount: "",
     totalAmountInWords: "",
     payment_mode: "",
@@ -77,7 +81,8 @@ export default function Component() {
           date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
           paid_upto: data.paid_upto,
           courseFee: data.courseFee,
-          exercisenkitFee: data.exercisenkitFee,
+          exerciseFee: data.exercisenkitFee,
+          kitFee: data.exercisenkitFee,
           net_amount: data.net_amount,
           totalAmountInWords: data.totalAmountInWords,
           payment_mode: data.payment_mode,
@@ -86,8 +91,18 @@ export default function Component() {
         console.error("No receipt data found.")
       }
     },
-    onError: (error) => {
-      console.error("Error fetching receipt:", error)
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'Error fetching receipt:';
+        setError(errorMessage);
+      } else {
+        // Other errors (network issues, etc.)
+        setError('Something went wrong. Please try again.');
+      }
     },
   })
 
@@ -116,13 +131,18 @@ export default function Component() {
         throw new Error("Receipt not found")
       }
     },
-    onError: (error) => {
-      if (error instanceof Error) {
-        setError(error.message)
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'Error fetching receipt:';
+        setError(errorMessage);
       } else {
-        setError("An unknown error occurred")
+        // Other errors (network issues, etc.)
+        setError('Something went wrong. Please try again.');
       }
-      setLoading(false)
     },
   })
 
@@ -335,25 +355,25 @@ export default function Component() {
                       <td className="border border-black p-1 print:p-[2px]">Exercise Book</td>
                       <td className="text-center border border-black p-1 print:p-[2px]"></td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
-                        {credentials.exercisenkitFee || 0}
+                        {credentials.exerciseFee || 0}
                       </td>
                     </tr>
                     <tr>
                       <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
                       <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
-                        {typeof credentials.exercisenkitFee === "number"
-                          ? (credentials.exercisenkitFee * 0.06).toFixed(2)
-                          : (Number.parseFloat((credentials.exercisenkitFee as string) || "0") * 0.06).toFixed(2)}
+                        {typeof credentials.exerciseFee === "number"
+                          ? (credentials.exerciseFee * 0.06).toFixed(2)
+                          : (Number.parseFloat((credentials.exerciseFee as string) || "0") * 0.06).toFixed(2)}
                       </td>
                     </tr>
                     <tr>
                       <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
                       <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
-                        {typeof credentials.exercisenkitFee === "number"
-                          ? (credentials.exercisenkitFee * 0.06).toFixed(2)
-                          : (Number.parseFloat((credentials.exercisenkitFee as string) || "0") * 0.06).toFixed(2)}
+                        {typeof credentials.exerciseFee === "number"
+                          ? (credentials.exerciseFee * 0.06).toFixed(2)
+                          : (Number.parseFloat((credentials.exerciseFee as string) || "0") * 0.06).toFixed(2)}
                       </td>
                     </tr>
                   </>
@@ -363,25 +383,25 @@ export default function Component() {
                       <td className="border border-black p-1 print:p-[2px]">Kit Fee</td>
                       <td className="text-center border border-black p-1 print:p-[2px]"></td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
-                        {credentials.exercisenkitFee || 0}
+                        {credentials.kitFee || 0}
                       </td>
                     </tr>
                     <tr>
                       <td className="text-center border border-black p-1 print:p-[2px] pl-4">Central Tax</td>
-                      <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
+                      <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
-                        {typeof credentials.exercisenkitFee === "number"
-                          ? (credentials.exercisenkitFee * 0.025).toFixed(2)
-                          : (Number.parseFloat((credentials.exercisenkitFee as string) || "0") * 0.025).toFixed(2)}
+                        {typeof credentials.kitFee === "number"
+                          ? (credentials.kitFee * 0.6).toFixed(2)
+                          : (Number.parseFloat((credentials.kitFee as string) || "0") * 0.06).toFixed(2)}
                       </td>
                     </tr>
                     <tr>
                       <td className="text-center border border-black p-1 print:p-[2px] pl-4">State Tax</td>
-                      <td className="text-center border border-black p-1 print:p-[2px]">2.5%</td>
+                      <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
-                        {typeof credentials.exercisenkitFee === "number"
-                          ? (credentials.exercisenkitFee * 0.025).toFixed(2)
-                          : (Number.parseFloat((credentials.exercisenkitFee as string) || "0") * 0.025).toFixed(2)}
+                        {typeof credentials.kitFee === "number"
+                          ? (credentials.kitFee * 0.06).toFixed(2)
+                          : (Number.parseFloat((credentials.kitFee as string) || "0") * 0.06).toFixed(2)}
                       </td>
                     </tr>
                   </>

@@ -13,6 +13,7 @@ import { fetchReceiptNumber, fetchStudent, saveReceipt, savemReceipt, updateStud
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
+import { AxiosError } from 'axios';
 
 interface Student {
   _id: string;
@@ -124,12 +125,21 @@ const FeeCollection = () => {
   const mutation = useMutation({
     mutationFn: fetchReceiptNumber,
     onSuccess: (data) => {
-      setReceiptNumber(data.receiptNumber);
-      setMreceiptNo(data.mreceiptNo);
+      setReceiptNumber(data?.data?.receiptNumber);
+      setMreceiptNo(data?.data?.mreceiptNo);
     },
-    onError: (error) => {
-      //setError('Error fetching student data');
-      console.error('Error fetching students:', error);
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'An error occurred while fetching receipt number';
+        setErrorMessage(errorMessage);
+      } else {
+        // Other errors (network issues, etc.)
+        setErrorMessage('Something went wrong. Please try again.');
+      }
     },
   });
 
@@ -156,10 +166,8 @@ const FeeCollection = () => {
   const [stateTax9, setStateTax9] = useState<number>(0);
   const [centralTax6, setCentralTax6] = useState<number>(0);
   const [stateTax6, setStateTax6] = useState<number>(0);
-  //const [centralTax25, setCentralTax25] = useState<number>(0);
-  //const [stateTax25, setStateTax25] = useState<number>(0);
-  //const [centralTax06, setCentralTax06] = useState<number>(0);
-  //const [stateTax06, setStateTax06] = useState<number>(0);
+  const [centralTax06, setCentralTax06] = useState<number>(0);
+  const [stateTax06, setStateTax06] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [totalAmountInWords, setTotalAmountInWords] = useState<string>("");
   const [mcourseFee, setMCourseFee] = useState<number>(0);
@@ -171,15 +179,12 @@ const FeeCollection = () => {
     setCourseFee(0);
     setExerciseBookFee(0);
     setkitFee(0);
-    //setjacketFee(0);
     setCentralTax9(0);
     setStateTax9(0);
     setCentralTax6(0);
     setStateTax6(0);
-    //setCentralTax25(0);
-    //setStateTax25(0);
-    //setCentralTax06(0);
-    //setStateTax06(0);
+    setCentralTax06(0);
+    setStateTax06(0);
     setMCourseFee(0);
     setMKitFee(0);
   };
@@ -193,19 +198,26 @@ const FeeCollection = () => {
       if (data) {
         setStudent(data);
       } else {
-        throw new Error("Failed to fetch student details");
+        setErrorMessage('Failed to fetch student details');
+        //throw new Error("Failed to fetch student details");
       }
     },
-    onError: (error) => {
-      console.error("Error fetching student:", error);
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'An error occurred while fetching student details';
+        setErrorMessage(errorMessage);
+      } else {
+        // Other errors (network issues, etc.)
+        setErrorMessage('Something went wrong. Please try again.');
+      }
     },
   });
 
   useEffect(() => {
-    // Set the current date in "DD/MM/YYYY" format
-    // const today = new Date();
-    // const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-    // setCurrentDate(formattedDate);
     const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
     setCurrentDate(today);
 
@@ -220,24 +232,16 @@ const FeeCollection = () => {
     const calculatedStateTax9 = courseFee * 0.09;
     const calculatedCentralTax6 = exerciseBookFee * 0.06;
     const calculatedStateTax6 = exerciseBookFee * 0.06;
-    //const calculatedCentralTax25 = kitFee * 0.025;
-    //const calculatedStateTax25 = kitFee * 0.025;
-    //const calculatedCentralTax06 = jacketFee * 0.06;
-    //const calculatedStateTax06 = jacketFee * 0.06;
+    const calculatedCentralTax06 = kitFee * 0.06;
+    const calculatedStateTax06 = kitFee * 0.06;
 
     setCentralTax9(calculatedCentralTax9);
     setStateTax9(calculatedStateTax9);
     setCentralTax6(calculatedCentralTax6);
     setStateTax6(calculatedStateTax6);
-    //setCentralTax25(calculatedCentralTax25);
-    //setStateTax25(calculatedStateTax25);
-    //setCentralTax06(calculatedCentralTax06);
-    //setStateTax06(calculatedStateTax06);
-
-
 
     // Calculate total amount (Course Fee + Exercise Book Fee + All Taxes)
-    const total = courseFee + exerciseBookFee + kitFee  + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6  + mcourseFee + mkitFee;
+    const total = courseFee + exerciseBookFee + kitFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax06 + calculatedStateTax06 + mcourseFee + mkitFee;
     setTotalAmount(total);
     setTotalAmountInWords(numberToWords.toWords(total).toUpperCase()); // Convert number to words
   }, [courseFee, exerciseBookFee, kitFee, mcourseFee, mkitFee]);
@@ -259,25 +263,46 @@ const FeeCollection = () => {
     onSuccess: () => {
 
     },
-    onError: (error) => {
-      console.error("An error occurred:", error);
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'An error occurred while saving the receipt';
+        setErrorMessage(errorMessage);
+      } else {
+        // Other errors (network issues, etc.)
+        setErrorMessage('Something went wrong. Please try again.');
+      }
     },
   });
 
   const addreciept = useMutation({
     mutationFn: saveReceipt,
     onSuccess: (data) => {
-      if (data) {
+      if (data?.data?.success) {
         setIsSaved(true);
         setSuccessMessage('Receipt saved successfully');
       } else {
-        setErrorMessage('Error in saving receipt');
+        setErrorMessage(data?.data?.message || 'Error in saving receipt');
       }
     },
-    onError: (error) => {
-      throw new Error(error.message || 'Failed to save receipt');
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'An error occurred while saving the receipt';
+        setErrorMessage(errorMessage);
+      } else {
+        // Other errors (network issues, etc.)
+        setErrorMessage('Something went wrong. Please try again.');
+      }
     },
   });
+
 
   const addmreciept = useMutation({
     mutationFn: savemReceipt,
@@ -289,8 +314,18 @@ const FeeCollection = () => {
         setErrorMessage('Error in saving receipt');
       }
     },
-    onError: (error) => {
-      throw new Error(error.message || 'Failed to save receipt');
+    onError: (error: unknown) => {
+      // Ensure error is an AxiosError
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        // Check if the API returned a meaningful error message
+        const errorMessage = axiosError.response.data?.message || 'An error occurred while saving the receipt';
+        setErrorMessage(errorMessage);
+      } else {
+        // Other errors (network issues, etc.)
+        setErrorMessage('Something went wrong. Please try again.');
+      }
     },
   });
 
@@ -339,7 +374,8 @@ const FeeCollection = () => {
         formData.append('paid_upto', student?.level || "");
         formData.append('date', new Date().toISOString());
         formData.append('courseFee', courseFee.toString());
-        formData.append('exercisenkitFee', kitFee.toString() || exerciseBookFee.toString());
+        formData.append('exerciseFee', exerciseBookFee.toString());
+        formData.append('kitFee', kitFee.toString());
         formData.append('net_amount', totalAmount.toString());
         formData.append('totalAmountInWords', totalAmountInWords);
         formData.append('payment_mode', paymentMode);
@@ -632,13 +668,13 @@ const FeeCollection = () => {
                   <td className="border border-black p-1 print:p-[2px]">
                     {copy === 2 ? (
                       <span className="w-full text-center block font-['Arial'] text-black">
-                        {centralTax6.toFixed(2)}
+                        {centralTax06.toFixed(2)}
                       </span>
                     ) : (
                       <Input
                         name={`centralTax6${copy}`}
                         className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
-                        value={centralTax6.toFixed(2)}
+                        value={centralTax06.toFixed(2)}
                         readOnly
                       />
                     )}
@@ -650,13 +686,13 @@ const FeeCollection = () => {
                   <td className="border border-black p-1 print:p-[2px]">
                     {copy === 2 ? (
                       <span className="w-full text-center block font-['Arial'] text-black">
-                        {stateTax6.toFixed(2)}
+                        {stateTax06.toFixed(2)}
                       </span>
                     ) : (
                       <Input
                         name={`stateTax6${copy}`}
                         className="w-full text-center border-none bg-transparent p-0 h-auto font-['Arial'] text-black"
-                        value={stateTax6.toFixed(2)}
+                        value={stateTax06.toFixed(2)}
                         readOnly
                       />
                     )}
