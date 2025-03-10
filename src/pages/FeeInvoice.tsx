@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { AxiosError } from 'axios';
 
 interface ReceiptData {
+  _id: string
   reciept_number: number
   scode: number
   name: string
@@ -81,8 +82,8 @@ export default function Component() {
           date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
           paid_upto: data.paid_upto,
           courseFee: data.courseFee,
-          exerciseFee: data.exercisenkitFee,
-          kitFee: data.exercisenkitFee,
+          exerciseFee: data.exerciseFee,
+          kitFee: data.kitFee,
           net_amount: data.net_amount,
           totalAmountInWords: data.totalAmountInWords,
           payment_mode: data.payment_mode,
@@ -537,7 +538,7 @@ export default function Component() {
               </TableHeader>
               <TableBody>
                 {paginatedData.map((invoice) => (
-                  <TableRow key={invoice.reciept_number} className="hover:bg-green-50 dark:hover:bg-gray-700">
+                  <TableRow key={invoice._id} className="hover:bg-green-50 dark:hover:bg-gray-700">
                     <TableCell>{invoice.reciept_number}</TableCell>
                     <TableCell>{invoice.name}</TableCell>
                     <TableCell>{new Date(invoice.date).toLocaleString()}</TableCell>

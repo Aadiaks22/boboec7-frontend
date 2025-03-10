@@ -2,8 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { LoginResponse, LoginError } from '../types/api';
 import Cookies from 'js-cookie';
 
-const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
-// const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 interface CreateUserResponse {
     authToken: string;
@@ -103,7 +103,12 @@ export const createuser = async (data: {
     city: string;
     course: string;
 }): Promise<CreateUserResponse> => {
-    const response = await api.post<CreateUserResponse>('/api/auth/createuser', data);
+    const token = Cookies.get('token');
+    const response = await api.post<CreateUserResponse>('/api/auth/createuser', data, {
+        headers: {
+            'auth-token': token,
+        },
+  });
     return response.data;  // Return only the data to match LoginResponse type
 };
 
@@ -140,7 +145,12 @@ export const updateStudentData = async ({ id, updateData }: UpdateStudentDataPar
 
 
 export const fetchStudents = async () => {
-    const response = await api.get(`/api/admin/fetchalluser`);
+    const token = Cookies.get('token');
+    const response = await api.get(`/api/admin/fetchalluser`, {
+        headers: {
+            'auth-token': token,
+        },
+  });
     return response.data;
 };
 
@@ -201,7 +211,12 @@ export const savemReceipt = async (data: FormData) => {
 
 
 export const getReceipt = async () => {
-    const response = await api.get(`${BASE_URL}/api/admin/getreciept`);
+    const authToken = Cookies.get('token');
+    const response = await api.get(`${BASE_URL}/api/admin/getreciept`, {
+        headers: {
+            'auth-token': authToken,
+        },
+    });
     if (!response.data) {
         throw new Error("Receipt not found");
     }
@@ -220,5 +235,31 @@ export const getReceiptbyid = async (id: number) => {
         console.error("Failed to fetch receipt:", error)
         throw error
     }
-}
+};
+
+export const logoutUser = async () => {
+    try {
+        const response = await axios.delete('/api/auth/logout');
+        console.log(response.data);
+    } catch (error) {
+        console.error("Error logging out:", error);
+    }
+};
+
+export async function verifyToken(token: string | undefined) {
+    if (!token) return { valid: false }; // Avoid unnecessary API calls
+  
+    try {
+      const response = await axios.post('/api/auth/verify-token', {token}, 
+        {
+            headers: {
+                'auth-token': token,
+            },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return { valid: false }; // Prevent infinite loop
+    }
+  }
 

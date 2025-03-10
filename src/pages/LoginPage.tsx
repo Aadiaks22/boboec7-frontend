@@ -11,6 +11,7 @@ import Cookies from 'js-cookie';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { LoginResponse } from "@/types/api";
+import { useGlobalContext } from '../types/useGlobalContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const { setGlobalVariable } = useGlobalContext();
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -42,6 +45,7 @@ const LoginPage = () => {
   const mutation = useMutation<LoginResponse, Error, { contact_number: string; password: string; role: string }>({
     mutationFn: login,
     onSuccess: (data) => {
+      setGlobalVariable(data.username);
       setSuccess("Login successful. Redirecting...");
       const options = {
         //httpOnly: true, 

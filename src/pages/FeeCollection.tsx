@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { AxiosError } from 'axios';
+import { useGlobalContext } from '../types/useGlobalContext';
 
 interface Student {
   _id: string;
@@ -107,6 +108,8 @@ const ModeDropdown: React.FC<ModeDropdownProps> = ({ mode, onModeChange }) => {
 };
 
 const FeeCollection = () => {
+
+  const { globalVariable } = useGlobalContext();
 
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -281,7 +284,7 @@ const FeeCollection = () => {
   const addreciept = useMutation({
     mutationFn: saveReceipt,
     onSuccess: (data) => {
-      if (data?.data?.success) {
+      if (data) {
         setIsSaved(true);
         setSuccessMessage('Receipt saved successfully');
       } else {
@@ -438,7 +441,7 @@ const FeeCollection = () => {
   const renderReceipt = (copy: number) => (
     <div className="invoice border border-black p-2 print:border-none print:p-1 print:text-[8pt] print:leading-tight bg-white text-black [&_*]:font-['Arial']">
       <div className="text-lg font-bold text-center mb-2 print:text-sm">
-        OEC-7 ACADEMY ({copy === 1 ? 'Student' : 'Office'} Copy)
+        {globalVariable} ACADEMY ({copy === 1 ? 'Student' : 'Office'} Copy)
       </div>
       {(student?.course === 'BRAINOBRAIN') && (
         <div className="text-xs text-center mb-2 print:text-[7pt]">
@@ -500,7 +503,7 @@ const FeeCollection = () => {
         </div>
         <div className="flex">
           <LevelDropdown
-            level={student?.level || "1"}
+            level={student?.level || "0"}
             onLevelChange={handleLevelChange}
           />
         </div>
@@ -583,7 +586,7 @@ const FeeCollection = () => {
                 )}
               </td>
             </tr>
-            {!r_id ? (
+            {(!r_id && student?.level > '1') ? (
               <>
                 <tr>
                   <td className="border border-black p-1 print:p-[2px]">Exercise Book</td>

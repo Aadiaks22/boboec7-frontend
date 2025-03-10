@@ -5,6 +5,7 @@ import './index.css'
 import { RouterProvider } from 'react-router-dom'
 import router from './router.tsx'
 import Modal from 'react-modal';
+import {GlobalProvider} from './types/GlobalContext.tsx'
 
 // Set the app element for accessibility
 Modal.setAppElement('#root');
@@ -14,8 +15,10 @@ const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <GlobalProvider>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>
+    </GlobalProvider>
   </StrictMode>,
 )

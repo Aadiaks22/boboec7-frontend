@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import { logoutUser } from './http/api';
+import { useMutation } from '@tanstack/react-query';
 
 interface IdleTimerProps {
   timeout: number; // Timeout in milliseconds
@@ -9,6 +11,19 @@ interface IdleTimerProps {
 export default function IdleTimer({ timeout }: IdleTimerProps) {
   const [isIdle, setIsIdle] = useState(false);
   const navigate = useNavigate();
+
+  // Define the logout mutation
+  const mutation = useMutation({
+    mutationFn: logoutUser,
+    onSuccess: () => {
+      Cookies.remove('token');
+      Cookies.remove('username');
+      navigate('/', { replace: true });
+    },
+    onError: (error) => {
+      console.error("Logout failed:", error);
+    }
+  });
 
   useEffect(() => {
     let idleTimer: NodeJS.Timeout;
@@ -42,11 +57,9 @@ export default function IdleTimer({ timeout }: IdleTimerProps) {
 
   useEffect(() => {
     if (isIdle) {
-      Cookies.remove('token');
-      //Cookies.remove('username');
-      navigate('/', { replace: true });
+      mutation.mutate(); // Call logout API when user is idle
     }
-  }, [isIdle, navigate]);
+  }, [isIdle, mutation]);
 
   return null;
 }

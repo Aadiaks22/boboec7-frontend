@@ -18,6 +18,7 @@ import { fetchStudents, updateStudentData } from '@/http/api'
 interface Student {
   _id: string;
   student_code: string;
+  //user_name: string;
   name: string;
   student_class: string;
   dob: string;

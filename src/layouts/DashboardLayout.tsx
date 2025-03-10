@@ -30,17 +30,36 @@ import {
 import { Link, Outlet } from "react-router-dom";
 import '../pages/FeeCollection.css';
 import Cookies from "js-cookie";
+import { logoutUser } from "@/http/api";
+import { useMutation } from "@tanstack/react-query";
+import { useGlobalContext } from '../types/useGlobalContext';
 
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const handleLogout = () => {
-    Cookies.remove('token');
-    Cookies.remove('username');
-    navigate("/");
-  }
+  const { globalVariable } = useGlobalContext();
+
+  const mutation = useMutation({
+    mutationFn: logoutUser,
+    onSuccess: () => {
+        // Remove cookies only after a successful API call
+        Cookies.remove('token');
+        Cookies.remove('username');
+
+        // Redirect to login page
+        navigate("/");
+    },
+    onError: (error) => {
+        console.error("Logout failed:", error);
+    }
+});
+
+const handleLogout = () => {
+    mutation.mutate(); // Call the API first, then handle logout logic in `onSuccess`
+};
+
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -59,7 +78,7 @@ const HomePage = () => {
                 style={{height: 30, width: 30}}
 
               />
-              {!isSidebarCollapsed && <span>BOBOEC7</span>}
+              {!isSidebarCollapsed && <span>BOB{globalVariable}</span>}
             </Link>
           </div>
           <div className="flex-1">

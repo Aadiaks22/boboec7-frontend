@@ -23,10 +23,6 @@ const router = createBrowserRouter([
     ]
   },
   {
-    path: "*",
-    element: <NotFound />,
-  },
-  {
     path: 'dashboard',
     element: <ProtectedRoute />,
     children: [
@@ -34,7 +30,7 @@ const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           {
-            path: '',
+            index: true,
             element: <Dashboard />
           },
           {
@@ -64,6 +60,10 @@ const router = createBrowserRouter([
         ]
       }
     ]
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   }
 ]);
 
