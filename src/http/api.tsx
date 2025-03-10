@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { LoginResponse, LoginError } from '../types/api';
 import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
 
 // const BASE_URL = import.meta.env.VITE_BASE_URL || "https://bobkidsportalbackend.onrender.com";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -54,6 +55,28 @@ interface Student {
     level: string;
     status: string;
 }
+
+// Define the interface for the decoded JWT data
+interface JwtPayload {
+    user: {
+        id: string;
+        username: string;
+        role: string;
+    };
+  }
+
+const token = Cookies.get('token');
+
+  // Extract username from token (if exists)
+  let username = "";
+  if (token) {
+    try {
+      const decodedToken = jwtDecode(token) as JwtPayload;
+      username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+    } catch (error) {
+      console.error("Invalid token:", error);
+    }
+  }
 
 
 const api = axios.create({
@@ -156,7 +179,12 @@ export const fetchStudents = async () => {
 
 
 export const fetchReceiptNumber = async () => {
-    const response = await api.get(`${BASE_URL}/api/admin/receipt-number`);
+    //const authToken = Cookies.get('token');
+    const response = await api.get(`${BASE_URL}/api/admin/receipt-number`, {
+        headers: {
+            'userName': username,
+        },
+    });
     return response.data;
 };
 
@@ -164,6 +192,7 @@ export const fetchReceiptNumber = async () => {
 export const addReceipt = async ({ formData, authToken }: { formData: FormData, authToken: string }) => {
     const response = await api.post(`${BASE_URL}/api/admin/addreciept`, {
         headers: {
+            'userName': username,
             'auth-token': authToken,
         },
         body: formData,
@@ -201,6 +230,7 @@ export const savemReceipt = async (data: FormData) => {
 
     const response = await axios.post(`${BASE_URL}/api/admin/addmreciept`, JSON.stringify(payload), {
         headers: {
+            'userName': username,
             'auth-token': authToken,
             'Content-Type': 'application/json'
         },
@@ -237,12 +267,15 @@ export const getReceiptbyid = async (id: number) => {
     }
 };
 
-export const logoutUser = async () => {
+export const logoutUser = async (username: string): Promise<void> => {
     try {
-        const response = await axios.delete('/api/auth/logout');
+        const response = await axios.delete("/api/auth/logout", {
+            data: { username }, // Correct way to send data in DELETE request
+        });
         console.log(response.data);
     } catch (error) {
         console.error("Error logging out:", error);
+        throw error; // Rethrow error for handling in the caller function
     }
 };
 

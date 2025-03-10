@@ -32,33 +32,51 @@ import '../pages/FeeCollection.css';
 import Cookies from "js-cookie";
 import { logoutUser } from "@/http/api";
 import { useMutation } from "@tanstack/react-query";
-import { useGlobalContext } from '../types/useGlobalContext';
+import { jwtDecode } from "jwt-decode";
 
+// Define the interface for the decoded JWT data
+interface JwtPayload {
+  user: {
+      id: string;
+      username: string;
+      role: string;
+  };
+}
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const { globalVariable } = useGlobalContext();
+  const token = Cookies.get('token');
+
+  // Extract username from token (if exists)
+  let username = "";
+  if (token) {
+    try {
+      const decodedToken = jwtDecode(token) as JwtPayload;
+      username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+    } catch (error) {
+      console.error("Invalid token:", error);
+    }
+  }
+
 
   const mutation = useMutation({
     mutationFn: logoutUser,
     onSuccess: () => {
-        // Remove cookies only after a successful API call
-        Cookies.remove('token');
-        Cookies.remove('username');
-
-        // Redirect to login page
-        navigate("/");
+      // Remove cookies only after a successful API call
+      Cookies.remove('token');
+      // Redirect to login page
+      navigate("/");
     },
     onError: (error) => {
-        console.error("Logout failed:", error);
+      console.error("Logout failed:", error);
     }
-});
+  });
 
-const handleLogout = () => {
-    mutation.mutate(); // Call the API first, then handle logout logic in `onSuccess`
-};
+  const handleLogout = () => {
+    mutation.mutate(username);
+  };
 
 
   const toggleSidebar = () => {
@@ -72,13 +90,13 @@ const handleLogout = () => {
         <div className="fixed flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 w-[228px] items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link to="/dashboard" className="flex items-center gap-2 font-bold text-[#ef8600] dark:text-blue-400">
-            <img
+              <img
                 src="/images/favicon.png"
                 alt="BOB"
-                style={{height: 30, width: 30}}
+                style={{ height: 30, width: 30 }}
 
               />
-              {!isSidebarCollapsed && <span>BOB{globalVariable}</span>}
+              {!isSidebarCollapsed && <span>BOB{username}</span>}
             </Link>
           </div>
           <div className="flex-1">

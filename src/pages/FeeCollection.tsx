@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { AxiosError } from 'axios';
-import { useGlobalContext } from '../types/useGlobalContext';
+import { jwtDecode } from "jwt-decode";
 
 interface Student {
   _id: string;
@@ -40,6 +40,15 @@ interface Student {
 interface LevelDropdownProps {
   level: string;
   onLevelChange: (level: string) => void;
+}
+
+// Define the interface for the decoded JWT data
+interface JwtPayload {
+  user: {
+      id: string;
+      username: string;
+      role: string;
+  };
 }
 
 // LevelDropdown component
@@ -109,7 +118,19 @@ const ModeDropdown: React.FC<ModeDropdownProps> = ({ mode, onModeChange }) => {
 
 const FeeCollection = () => {
 
-  const { globalVariable } = useGlobalContext();
+  const token = Cookies.get('token');
+
+  // Extract username from token (if exists)
+  let username = "";
+  if (token) {
+    try {
+      const decodedToken = jwtDecode(token) as JwtPayload;
+      username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+    } catch (error) {
+      console.error("Invalid token:", error);
+    }
+  }
+
 
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -441,7 +462,7 @@ const FeeCollection = () => {
   const renderReceipt = (copy: number) => (
     <div className="invoice border border-black p-2 print:border-none print:p-1 print:text-[8pt] print:leading-tight bg-white text-black [&_*]:font-['Arial']">
       <div className="text-lg font-bold text-center mb-2 print:text-sm">
-        {globalVariable} ACADEMY ({copy === 1 ? 'Student' : 'Office'} Copy)
+        {username} ACADEMY ({copy === 1 ? 'Student' : 'Office'} Copy)
       </div>
       {(student?.course === 'BRAINOBRAIN') && (
         <div className="text-xs text-center mb-2 print:text-[7pt]">
