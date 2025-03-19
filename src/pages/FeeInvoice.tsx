@@ -107,7 +107,7 @@ export default function Component() {
     },
   })
 
-  const openModal = async (id: number) => {
+  const openModal = async (id: string) => {
     if (!id) {
       return alert("Error Data Not Found")
     }
@@ -392,7 +392,7 @@ export default function Component() {
                       <td className="text-center border border-black p-1 print:p-[2px]">6%</td>
                       <td className="border border-black p-1 print:p-[2px] text-center">
                         {typeof credentials.kitFee === "number"
-                          ? (credentials.kitFee * 0.6).toFixed(2)
+                          ? (credentials.kitFee * 0.06).toFixed(2)
                           : (Number.parseFloat((credentials.kitFee as string) || "0") * 0.06).toFixed(2)}
                       </td>
                     </tr>
@@ -541,11 +541,11 @@ export default function Component() {
                   <TableRow key={invoice._id} className="hover:bg-green-50 dark:hover:bg-gray-700">
                     <TableCell>{invoice.reciept_number}</TableCell>
                     <TableCell>{invoice.name}</TableCell>
-                    <TableCell>{new Date(invoice.date).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(invoice.date).toISOString().split('T')[0]}</TableCell>
                     <TableCell>{invoice.paid_upto} Level</TableCell>
                     <TableCell>Rs.{invoice.net_amount.toFixed(2)}</TableCell>
                     <TableCell
-                      onClick={() => openModal(invoice.reciept_number)}
+                      onClick={() => openModal(invoice._id)}
                       className="cursor-pointer text-blue-500 hover:underline"
                     >
                       <Eye className="h-4 w-4" />

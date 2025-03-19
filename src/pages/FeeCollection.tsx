@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect, useRef, useState } from "react";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import numberToWords from 'number-to-words';
 import { Button } from "@/components/ui/button";
@@ -178,6 +178,10 @@ const FeeCollection = () => {
   //const [error, setError] = useState<string | null>(null); // State to store error message
   const [currentDate, setCurrentDate] = useState<string>("");
 
+  const handleDateChange = (e: { target: { value: SetStateAction<string>; }; }) => {
+    setCurrentDate(e.target.value);
+  };
+
   // State to store dynamically added student ID
   const [s_id, setSId] = useState<string | null>(null);
 
@@ -263,6 +267,8 @@ const FeeCollection = () => {
     setStateTax9(calculatedStateTax9);
     setCentralTax6(calculatedCentralTax6);
     setStateTax6(calculatedStateTax6);
+    setCentralTax06(calculatedCentralTax06);
+    setStateTax06(calculatedStateTax06);
 
     // Calculate total amount (Course Fee + Exercise Book Fee + All Taxes)
     const total = courseFee + exerciseBookFee + kitFee + calculatedCentralTax9 + calculatedStateTax9 + calculatedCentralTax6 + calculatedStateTax6 + calculatedCentralTax06 + calculatedStateTax06 + mcourseFee + mkitFee;
@@ -396,7 +402,7 @@ const FeeCollection = () => {
         formData.append('name', student?.name || "");
         formData.append('course', student?.course || "");
         formData.append('paid_upto', student?.level || "");
-        formData.append('date', new Date().toISOString());
+        formData.append('date', currentDate);
         formData.append('courseFee', courseFee.toString());
         formData.append('exerciseFee', exerciseBookFee.toString());
         formData.append('kitFee', kitFee.toString());
@@ -538,7 +544,8 @@ const FeeCollection = () => {
             id={`date${copy}`}
             name={`date${copy}`}
             value={currentDate}
-            onChange={(e) => setCurrentDate(e.target.value)}
+            //onChange={(e) => setCurrentDate(e.target.value)}
+            onChange={handleDateChange}
           />
         </div>
       </div>

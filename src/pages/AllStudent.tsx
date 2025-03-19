@@ -7,13 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, Users, FileSpreadsheet, FileText } from 'lucide-react'
+import { ChevronDown, Users, FileSpreadsheet, FileText, Trash2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { fetchStudents, updateStudentData } from '@/http/api'
+import { deletestudentdata, fetchStudents, updateStudentData } from '@/http/api'
 
 interface Student {
   _id: string;
@@ -142,6 +142,21 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
     }
   };
 
+  // Update student mutation
+  const deleteMutation = useMutation({
+    mutationFn: deletestudentdata,
+    onSuccess: () => {
+
+    },
+    onError: (error) => {
+      console.error("An error occurred:", error);
+    },
+  });
+
+  const deletedata = () => {
+    deleteMutation.mutate();
+  }
+
   const generatePDF = () => {
     const doc = new jsPDF();
 
@@ -244,6 +259,10 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
             <Button onClick={generateExcel} className="bg-green-500 hover:bg-green-600 flex-1 sm:flex-none">
               <FileSpreadsheet className="mr-2" />
               Excel
+            </Button>
+            <Button onClick={deletedata} className="bg-red-500 hover:bg-red-600 flex-1 sm:flex-none">
+              <Trash2 className="mr-2" />
+              Delete Data
             </Button>
           </div>
         </div>

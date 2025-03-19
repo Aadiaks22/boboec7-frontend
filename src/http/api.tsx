@@ -179,10 +179,11 @@ export const fetchStudents = async () => {
 
 
 export const fetchReceiptNumber = async () => {
-    //const authToken = Cookies.get('token');
+    const authToken = Cookies.get('token');
     const response = await api.get(`${BASE_URL}/api/admin/receipt-number`, {
         headers: {
             'userName': username,
+            'auth-token': authToken
         },
     });
     return response.data;
@@ -206,6 +207,7 @@ export const saveReceipt = async (data: FormData) => {
     const authToken = Cookies.get('token');
     const response = await axios.post(`${BASE_URL}/api/admin/addreciept`, data, {
         headers: {
+            'userName': username,
             'auth-token': authToken,
             "Content-Type": "application/json"
         },
@@ -253,7 +255,7 @@ export const getReceipt = async () => {
     return response.data;
 };
 
-export const getReceiptbyid = async (id: number) => {
+export const getReceiptbyid = async (id: string) => {
     try {
         const response = await fetch(`${BASE_URL}/api/admin/receipts/${id}`)
         if (!response.ok) {
@@ -269,7 +271,7 @@ export const getReceiptbyid = async (id: number) => {
 
 export const logoutUser = async (username: string): Promise<void> => {
     try {
-        const response = await axios.delete("/api/auth/logout", {
+        const response = await axios.delete(`/api/auth/logout`, {
             data: { username }, // Correct way to send data in DELETE request
         });
         console.log(response.data);
@@ -283,7 +285,7 @@ export async function verifyToken(token: string | undefined) {
     if (!token) return { valid: false }; // Avoid unnecessary API calls
   
     try {
-      const response = await axios.post('/api/auth/verify-token', {token}, 
+      const response = await axios.post(`/api/auth/verify-token`, {token}, 
         {
             headers: {
                 'auth-token': token,
@@ -295,4 +297,15 @@ export async function verifyToken(token: string | undefined) {
       return { valid: false }; // Prevent infinite loop
     }
   }
+
+  export const deletestudentdata = async () => {
+    try {
+        const response = await axios.delete(`/api/admin/deletestudentdata`);
+        console.log(response.data);
+    } catch (error) {
+        console.error("Error logging out:", error);
+        throw error; // Rethrow error for handling in the caller function
+    }
+};
+
 
