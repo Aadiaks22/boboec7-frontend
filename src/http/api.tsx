@@ -29,6 +29,7 @@ interface FetchStudentResponse {
     level: string;
     status: string;
     role: string;
+    gstno: string;
 }
 
 // UpdateStudent function
@@ -56,27 +57,35 @@ interface Student {
     status: string;
 }
 
+// Define the expected response type
+interface DeleteResponse {
+    message: string;
+}
+
 // Define the interface for the decoded JWT data
 interface JwtPayload {
     user: {
         id: string;
         username: string;
+        gstno: string;
         role: string;
     };
-  }
+}
 
 const token = Cookies.get('token');
 
-  // Extract username from token (if exists)
-  let username = "";
-  if (token) {
+// Extract username from token (if exists)
+let username = "";
+let gstno = "";
+if (token) {
     try {
-      const decodedToken = jwtDecode(token) as JwtPayload;
-      username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+        const decodedToken = jwtDecode(token) as JwtPayload;
+        username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+        gstno = decodedToken.user.gstno || "GST Not Found";
     } catch (error) {
-      console.error("Invalid token:", error);
+        console.error("Invalid token:", error);
     }
-  }
+}
 
 
 const api = axios.create({
@@ -131,7 +140,7 @@ export const createuser = async (data: {
         headers: {
             'auth-token': token,
         },
-  });
+    });
     return response.data;  // Return only the data to match LoginResponse type
 };
 
@@ -144,7 +153,7 @@ export const fetchStudent = async (id: string | null): Promise<FetchStudentRespo
     if (data.dob) {
         data.dob = new Date(data.dob).toISOString().split("T")[0];
     }
-    return data;
+    return {...data, gstno}; // Add gstno to response
 };
 
 // Combined function for updating student details
@@ -173,7 +182,7 @@ export const fetchStudents = async () => {
         headers: {
             'auth-token': token,
         },
-  });
+    });
     return response.data;
 };
 
@@ -186,19 +195,6 @@ export const fetchReceiptNumber = async () => {
             'auth-token': authToken
         },
     });
-    return response.data;
-};
-
-// In your API module file, e.g., api.js or api.ts
-export const addReceipt = async ({ formData, authToken }: { formData: FormData, authToken: string }) => {
-    const response = await api.post(`${BASE_URL}/api/admin/addreciept`, {
-        headers: {
-            'userName': username,
-            'auth-token': authToken,
-        },
-        body: formData,
-    });
-
     return response.data;
 };
 
@@ -274,7 +270,7 @@ export const logoutUser = async (username: string): Promise<void> => {
         const response = await axios.delete(`/api/auth/logout`, {
             data: { username }, // Correct way to send data in DELETE request
         });
-        console.log(response.data);
+        return response.data; 
     } catch (error) {
         console.error("Error logging out:", error);
         throw error; // Rethrow error for handling in the caller function
@@ -283,29 +279,29 @@ export const logoutUser = async (username: string): Promise<void> => {
 
 export async function verifyToken(token: string | undefined) {
     if (!token) return { valid: false }; // Avoid unnecessary API calls
-  
-    try {
-      const response = await axios.post(`/api/auth/verify-token`, {token}, 
-        {
-            headers: {
-                'auth-token': token,
-            },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Token verification failed:', error);
-      return { valid: false }; // Prevent infinite loop
-    }
-  }
 
-  export const deletestudentdata = async () => {
     try {
-        const response = await axios.delete(`/api/admin/deletestudentdata`);
-        console.log(response.data);
+        const response = await axios.post(`/api/auth/verify-token`, { token },
+            {
+                headers: {
+                    'auth-token': token,
+                },
+            });
+        return response.data;
     } catch (error) {
-        console.error("Error logging out:", error);
-        throw error; // Rethrow error for handling in the caller function
+        console.error('Token verification failed:', error);
+        return { valid: false }; // Prevent infinite loop
     }
+}
+
+export const deletestudentdata = async (): Promise<DeleteResponse> => {
+    const response = await axios.delete(`/api/admin/deletestudentdata`);
+    return response.data;
+};
+
+export const deletereceiptdata = async (): Promise<DeleteResponse> => {
+    const response = await axios.delete(`/api/admin/deletereceiptdata`);
+    return response.data;
 };
 
 

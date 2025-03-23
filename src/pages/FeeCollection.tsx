@@ -47,6 +47,7 @@ interface JwtPayload {
   user: {
       id: string;
       username: string;
+      gstno: string;
       role: string;
   };
 }
@@ -118,6 +119,9 @@ const ModeDropdown: React.FC<ModeDropdownProps> = ({ mode, onModeChange }) => {
 
 const FeeCollection = () => {
 
+  const [gstno, setGstno] = useState<string>(" ");
+
+
   const token = Cookies.get('token');
 
   // Extract username from token (if exists)
@@ -126,6 +130,7 @@ const FeeCollection = () => {
     try {
       const decodedToken = jwtDecode(token) as JwtPayload;
       username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+      //gstno = decodedToken.user.gstno|| "Not Found";
     } catch (error) {
       console.error("Invalid token:", error);
     }
@@ -223,6 +228,8 @@ const FeeCollection = () => {
   const studentdata = useMutation({
     mutationFn: fetchStudent,
     onSuccess: (data) => {
+      const gstNumber = data?.gstno ?? "GST Not Found";
+      setGstno(gstNumber);
       if (data) {
         setStudent(data);
       } else {
@@ -472,7 +479,7 @@ const FeeCollection = () => {
       </div>
       {(student?.course === 'BRAINOBRAIN') && (
         <div className="text-xs text-center mb-2 print:text-[7pt]">
-          (GST IN - 09AJUPB7083R1Z5)
+          {gstno}
         </div>
       )}
 

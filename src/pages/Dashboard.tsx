@@ -1,9 +1,32 @@
 import { useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  user: {
+      id: string;
+      username: string;
+      role: string;
+  };
+}
 
 export default function Dashboard() {
   const [isHovered, setIsHovered] = useState(false)
+
+  const token = Cookies.get('token');
+  
+    // Extract username from token (if exists)
+    let username = "";
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token) as JwtPayload;
+        username = decodedToken.user.username || "Unknown User"; // Fallback if username is missing
+      } catch (error) {
+        console.error("Invalid token:", error);
+      }
+    }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-300 via-orange-400 to-orange-500 flex items-center justify-center">
@@ -32,7 +55,7 @@ export default function Dashboard() {
               <h1 className="text-3xl sm:text-4xl font-bold text-orange-800 tracking-tight">
                 Welcome to{" "}
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-400">
-                  BRAINOBRAIN-OEC7
+                  BRAINOBRAIN  {username}
                 </span>
               </h1>
               <p className="text-orange-700 text-center sm:text-left max-w-md">

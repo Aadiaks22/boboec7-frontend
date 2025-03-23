@@ -7,13 +7,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, Users, FileSpreadsheet, FileText, Trash2 } from 'lucide-react'
+import { ChevronDown, Users, FileSpreadsheet, FileText, Trash2, XCircle, CheckCircle2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { deletestudentdata, fetchStudents, updateStudentData } from '@/http/api'
+import { AxiosError } from 'axios'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface Student {
   _id: string;
@@ -142,14 +144,23 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
     }
   };
 
-  // Update student mutation
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // delete student mutation
   const deleteMutation = useMutation({
     mutationFn: deletestudentdata,
-    onSuccess: () => {
-
+    onSuccess: (data) => {
+      setSuccessMessage(data?.message || "Student data deleted successfully!");
     },
-    onError: (error) => {
-      console.error("An error occurred:", error);
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        setErrorMessage(axiosError.response.data?.message || "An error occurred while deleting the data");
+      } else {
+        setErrorMessage("Something went wrong. Please try again.");
+      }
     },
   });
 
@@ -231,6 +242,21 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
       </CardHeader>
       <CardContent className="p-6">
         {error && <p className="text-red-500 mb-4 p-2 bg-red-100 rounded">{error}</p>}
+
+        {errorMessage && (
+          <Alert variant="destructive" className="print:hidden mb-4">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert variant="default" className="print:hidden mb-4 bg-green-100 text-green-800 border-green-300">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
+        )}
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap items-center gap-4">
           <div className="w-full sm:flex-1 sm:min-w-[200px]">
             <Input
@@ -264,6 +290,7 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
               <Trash2 className="mr-2" />
               Delete Data
             </Button>
+
           </div>
         </div>
         {students.length > 0 ? (
@@ -354,6 +381,7 @@ export default function StudentManagement({ openModal }: { openModal: (id: strin
         </div>
       </CardContent>
     </Card>
+
   )
 }
 

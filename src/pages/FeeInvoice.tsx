@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight, Search, Calendar, Eye, FileText, PrinterIcon as Print } from "lucide-react"
-import { getReceipt, getReceiptbyid } from "@/http/api"
+import { ChevronLeft, ChevronRight, Search, Calendar, Eye, FileText, PrinterIcon as Print, Trash2, XCircle, CheckCircle2 } from "lucide-react"
+import { deletereceiptdata, getReceipt, getReceiptbyid } from "@/http/api"
 import { useMutation } from "@tanstack/react-query"
 import Modal from "react-modal"
 import { Label } from "@/components/ui/label"
 import { AxiosError } from 'axios';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface ReceiptData {
   _id: string
@@ -106,6 +107,31 @@ export default function Component() {
       }
     },
   })
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // delete student mutation
+  const deleteMutation = useMutation({
+    mutationFn: deletereceiptdata,
+    onSuccess: (data) => {
+      setSuccessMessage(data?.message || "Student data deleted successfully!");
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<{ message: string }>;
+
+      if (axiosError.response) {
+        setErrorMessage(axiosError.response.data?.message || "An error occurred while deleting the data");
+      } else {
+        setErrorMessage("Something went wrong. Please try again.");
+      }
+    },
+  });
+
+  const deletedata = () => {
+    deleteMutation.mutate();
+  }
+
 
   const openModal = async (id: string) => {
     if (!id) {
@@ -467,6 +493,20 @@ export default function Component() {
             Invoice Data
           </CardTitle>
         </CardHeader>
+        {errorMessage && (
+          <Alert variant="destructive" className="print:hidden mb-4">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        {successMessage && (
+          <Alert variant="default" className="print:hidden mb-4 bg-green-100 text-green-800 border-green-300">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
+        )}
         <CardContent className="p-6">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 shadow-md">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -517,11 +557,18 @@ export default function Component() {
                 </div>
               </div>
             </div>
-            <Button
-              className="mt-4 bg-green-600 hover:bg-green-700 text-white"
-            >
-              Search
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                className="mt-4 bg-green-600 hover:bg-green-700 text-white"
+              >
+                Search
+              </Button>
+              <Button onClick={deletedata} className="mt-4 bg-red-500 hover:bg-red-600">
+                <Trash2 className="mr-2" />
+                Delete Data
+              </Button>
+            </div>
+
           </div>
 
           <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
